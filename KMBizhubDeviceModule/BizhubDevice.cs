@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Xml;
+using Newtonsoft.Json.Linq;
 using PrinterHealth;
 using PrinterHealth.Model;
 
@@ -51,19 +53,9 @@ namespace KMBizhubDeviceModule
         public const string EnglishLanguageEndpoint = "/wcd/lang_fl_En.xml";
 
         /// <summary>
-        /// The hostname of the printer.
+        /// The device configuration.
         /// </summary>
-        public string Hostname { get; protected set; }
-
-        /// <summary>
-        /// The password of the admin user.
-        /// </summary>
-        public string AdminPassword { get; protected set; }
-
-        /// <summary>
-        /// Whether HTTPS should be used.
-        /// </summary>
-        public bool Https { get; protected set; }
+        protected readonly BizhubDeviceConfig Config;
 
         /// <summary>
         /// The web client.
@@ -74,12 +66,9 @@ namespace KMBizhubDeviceModule
         /// Initialize a KMBizhubDevice with the given parameters.
         /// </summary>
         /// <param name="parameters">Parameters to this module.</param>
-        protected BizhubDevice(Dictionary<string, string> parameters)
+        protected BizhubDevice(JObject parameters)
         {
-            Hostname = parameters["Hostname"];
-            AdminPassword = parameters["AdminPassword"];
-            Https = parameters.ContainsKey("Https") && bool.Parse(parameters["Https"]);
-
+            Config = new BizhubDeviceConfig(parameters);
             Client = new CookieWebClient {IgnoreCookiePaths = true};
         }
 
@@ -107,8 +96,8 @@ namespace KMBizhubDeviceModule
         {
             return new Uri(string.Format(
                 "http{0}://{1}{2}",
-                Https ? "s" : "",
-                Hostname,
+                Config.Https ? "s" : "",
+                Config.Hostname,
                 endpoint
             ));
         }
@@ -135,9 +124,7 @@ namespace KMBizhubDeviceModule
             if (statusElement != null)
             {
                 var printerStatusNode = statusElement.SelectSingleNode("./PrintStatus/text()");
-                var scannerStatusNode = statusElement.SelectSingleNode("./ScanStatus/text()");
                 var printerStatus = printerStatusNode == null ? "unknown" : printerStatusNode.Value;
-                var scannerStatus = scannerStatusNode == null ? "unknown" : scannerStatusNode.Value;
 
                 if (NonErrorCodes.Contains(printerStatus))
                 {
@@ -184,7 +171,7 @@ namespace KMBizhubDeviceModule
 
         public override string ToString()
         {
-            return string.Format("{0}({1})", GetType().Name, Hostname);
+            return string.Format("{0}({1})", GetType().Name, Config.Hostname);
         }
 
         protected void AddCookie(string cookieName, string cookieValue)
@@ -193,7 +180,7 @@ namespace KMBizhubDeviceModule
                 cookieName,
                 cookieValue,
                 "/",
-                Hostname
+                Config.Hostname
             ));
         }
 
@@ -206,7 +193,7 @@ namespace KMBizhubDeviceModule
             {
                 {"func", "PSL_LP0_TOP"},
                 {"R_ADM", "Admin"},
-                {"password", AdminPassword}
+                {"password", Config.AdminPassword}
             };
 
             Client.UploadValues(
@@ -239,10 +226,23 @@ namespace KMBizhubDeviceModule
         public virtual void CleanupBrokenJobs()
         {
             Login();
-            var failedJobIDs = GetFailedJobIDs();
-            foreach (var failedJobID in failedJobIDs)
+            bool jobFailed = true;
+
+            while (jobFailed)
             {
-                DeleteJob(failedJobID);
+                jobFailed = false;
+
+                var failedJobIDs = GetFailedJobIDs();
+                foreach (var failedJobID in failedJobIDs)
+                {
+                    jobFailed = true;
+                    DeleteJob(failedJobID);
+                }
+
+                if (jobFailed)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(Config.FailedJobRepeatTimeSeconds));
+                }
             }
         }
 

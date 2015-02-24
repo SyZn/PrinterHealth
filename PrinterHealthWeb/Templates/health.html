@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8"/>
+  <title>Printer Health</title>
+</head>
+<body>
+<div class="printers">
+  {% for printer in printers %}
+  <div class="printer">
+    <div class="name">{{ printer.name | escape }}</div>
+    <div class="job-count"><span class="job-count">{{ printer.active_jobs | escape }}</span> jobs</div>
+    <div class="media">
+      {% for medium in printer.media %}
+      <div class="medium {{ medium.style_classes | escape }}">
+        <div class="description">{{ medium.description | escape }}</div>
+        {% if medium.is_measurable %}
+        <div class="measure-box {{ medium.status_class | escape }}">
+          <div class="measure-bar" style="height:{{ medium.percentage | escape }}%"></div>
+        </div>
+        {% else %}
+        <div class="status-box {{ medium.status_class | escape }}"></div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="markers">
+      {% for marker in printer.markers %}
+      <div class="marker {{ marker.style_classes | escape }}">
+        <div class="description">{{ marker.description | escape }}</div>
+        {% if marker.is_measurable %}
+        <div class="measure-box {{ marker.status_class | escape }}">
+          <div class="measure-bar" style="height:{{ marker.percentage | escape }}%"></div>
+        </div>
+        {% else %}
+        <div class="status-box {{ medium.status_class | escape }}"></div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="status-messages">
+      {% for status_message in printer.status_messages %}
+      <div class="status-message {{ status_message.level_class | escape }}">
+        {{ status_message.description | escape }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+</body>
+</html>

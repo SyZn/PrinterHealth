@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}</ProjectGuid>
+    <ProjectGuid>{603E73C6-442A-4791-A44B-CFD1060DDC39}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PrinterHealth</RootNamespace>
-    <AssemblyName>PrinterHealth</AssemblyName>
+    <RootNamespace>PrinterHealthWeb</RootNamespace>
+    <AssemblyName>PrinterHealthWeb</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,30 +30,20 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.7.0.1-beta1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="DotLiquid">
+      <HintPath>..\packages\DotLiquid.1.8.0\lib\NET45\DotLiquid.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CookieWebClient.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Model\IMarker.cs" />
-    <Compile Include="Model\IMeasuredMedium.cs" />
-    <Compile Include="Model\IMeasuredMarker.cs" />
-    <Compile Include="Model\IMedium.cs" />
-    <Compile Include="Model\IMonitoredMarker.cs" />
-    <Compile Include="Model\IMonitoredMedium.cs" />
-    <Compile Include="Model\IPrinterWithJobCleanup.cs" />
-    <Compile Include="Model\IStatusInfo.cs" />
-    <Compile Include="Model\IPrinter.cs" />
-    <Compile Include="Model\StatusLevel.cs" />
+    <Compile Include="Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Templates\health.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

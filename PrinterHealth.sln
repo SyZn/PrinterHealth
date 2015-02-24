@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrinterHealth", "PrinterHea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KMBizhubDeviceModule", "KMBizhubDeviceModule\KMBizhubDeviceModule.csproj", "{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrinterHealthWeb", "PrinterHealthWeb\PrinterHealthWeb.csproj", "{603E73C6-442A-4791-A44B-CFD1060DDC39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{603E73C6-442A-4791-A44B-CFD1060DDC39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{603E73C6-442A-4791-A44B-CFD1060DDC39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{603E73C6-442A-4791-A44B-CFD1060DDC39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{603E73C6-442A-4791-A44B-CFD1060DDC39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

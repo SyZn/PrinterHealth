@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
 
 namespace KMBizhubDeviceModule
 {
@@ -7,7 +7,7 @@ namespace KMBizhubDeviceModule
     /// </summary>
     public class BizhubC554Device : BizhubDevice
     {
-        public BizhubC554Device(Dictionary<string, string> parameters)
+        public BizhubC554Device(JObject parameters)
             : base(parameters)
         {
         }
