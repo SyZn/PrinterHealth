@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrinterHealth", "PrinterHealth\PrinterHealth.csproj", "{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KMBizhubDeviceModule", "KMBizhubDeviceModule\KMBizhubDeviceModule.csproj", "{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
