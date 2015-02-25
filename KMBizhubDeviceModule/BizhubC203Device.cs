@@ -26,5 +26,10 @@ namespace KMBizhubDeviceModule
         {
             get { return "/wcd/job.xml"; }
         }
+
+        public override string ConsumablesStatusEndpoint
+        {
+            get { return "/wcd/system.xml"; }
+        }
     }
 }

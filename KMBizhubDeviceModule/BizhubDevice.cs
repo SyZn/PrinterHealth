@@ -32,6 +32,11 @@ namespace KMBizhubDeviceModule
         public const string LoginEndpoint = "/wcd/ulogin.cgi";
 
         /// <summary>
+        /// The endpoint to which to post login-free session initialization requests.
+        /// </summary>
+        public const string NoLoginEndpoint = "/wcd/index.html?access=SYS_INF";
+
+        /// <summary>
         /// The endpoint at which to receive active (including failed) jobs.
         /// </summary>
         public const string DeleteJobEndpoint = "/wcd/user.cgi";
@@ -40,12 +45,6 @@ namespace KMBizhubDeviceModule
         /// The endpoint at which to receive general printer status information.
         /// </summary>
         public const string CommonStatusEndpoint = "/wcd/common.xml";
-
-        /// <summary>
-        /// The endpoint at which to receive detailed status information about the printer's consumables (media and
-        /// markers).
-        /// </summary>
-        public const string ConsumablesStatusEndpoint = "/wcd/system_device.xml";
 
         /// <summary>
         /// The endpoint at which to receive English-language translations of the status codes.
@@ -69,7 +68,11 @@ namespace KMBizhubDeviceModule
         protected BizhubDevice(JObject parameters)
         {
             Config = new BizhubDeviceConfig(parameters);
-            Client = new CookieWebClient {IgnoreCookiePaths = true};
+            Client = new CookieWebClient { IgnoreCookiePaths = true, DontVerifyHttps = !Config.VerifyHttpsCertificate };
+            BizhubMarkers = new List<BizhubToner>();
+            BizhubMedia = new List<BizhubPaper>();
+            BizhubJobCount = 0;
+            BizhubStatus = new List<BizhubStatus>();
         }
 
         /// <summary>
@@ -78,14 +81,20 @@ namespace KMBizhubDeviceModule
         public abstract string ErrorJobsXPath { get; }
 
         /// <summary>
+        /// XPath string to fetch the list of current jobs.
+        /// </summary>
+        public abstract string AllJobsXPath { get; }
+
+        /// <summary>
         /// The endpoint at which to receive active (including failed) jobs.
         /// </summary>
         public abstract string ActiveJobsEndpoint { get; }
 
         /// <summary>
-        /// XPath string to fetch the list of current jobs.
+        /// The endpoint at which to receive detailed status information about the printer's consumables (media and
+        /// markers).
         /// </summary>
-        public abstract string AllJobsXPath { get; }
+        public abstract string ConsumablesStatusEndpoint { get; }
 
         /// <summary>
         /// Returns the URI for a specific endpoint on the printer.
@@ -189,18 +198,24 @@ namespace KMBizhubDeviceModule
             // I want the HTML edition
             AddCookie("vm", "Html");
 
-            var values = new NameValueCollection
+            if (Config.PerformLogin)
             {
-                {"func", "PSL_LP0_TOP"},
-                {"R_ADM", "Admin"},
-                {"password", Config.AdminPassword}
-            };
-
-            Client.UploadValues(
-                GetUri(LoginEndpoint),
-                "POST",
-                values
-            );
+                var values = new NameValueCollection
+                {
+                    {"func", "PSL_LP0_TOP"},
+                    {"R_ADM", "Admin"},
+                    {"password", Config.AdminPassword}
+                };
+                Client.UploadValues(
+                    GetUri(LoginEndpoint),
+                    "POST",
+                    values
+                );
+            }
+            else
+            {
+                Client.DownloadData(GetUri(NoLoginEndpoint));
+            }
         }
 
         public virtual IReadOnlyCollection<IMarker> Markers
@@ -270,7 +285,7 @@ namespace KMBizhubDeviceModule
                     var state = (stateNode != null) ? stateNode.Value : "";
 
                     bool isEmpty, isLow;
-                    if (state == "NearLifeEnd")
+                    if (state == "NearLifeEnd" || state == "NearEmpty")
                     {
                         isEmpty = false;
                         isLow = true;
@@ -347,6 +362,7 @@ namespace KMBizhubDeviceModule
                     {
                         styleClasses.Add(paperNameNode.Value.ToLowerInvariant());
                     }
+
                     newMedia.Add(new BizhubPaper(isEmpty, isLow, mediumDescription, styleClasses));
                 }
             }

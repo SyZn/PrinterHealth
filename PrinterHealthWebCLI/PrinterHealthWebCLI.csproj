@@ -4,16 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6CFFE275-75DE-4078-9053-4A98F6FF4CB5}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{7A7A6935-08FB-4B0B-80CD-A598A9DB8749}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>KMBizhubDeviceModule</RootNamespace>
-    <AssemblyName>KMBizhubDeviceModule</AssemblyName>
+    <RootNamespace>PrinterHealthWebCLI</RootNamespace>
+    <AssemblyName>PrinterHealthWebCLI</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -35,31 +37,25 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.7.0.1-beta1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BizhubDeviceConfig.cs" />
-    <Compile Include="BizhubDevice.cs" />
-    <Compile Include="BizhubPaper.cs" />
-    <Compile Include="BizhubStatus.cs" />
-    <Compile Include="BizhubToner.cs" />
-    <Compile Include="BizhubC203Device.cs" />
-    <Compile Include="BizhubC554Device.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PrinterHealth\PrinterHealth.csproj">
-      <Project>{5b2727a1-e2e4-47d5-8faa-59f21990f1e9}</Project>
-      <Name>PrinterHealth</Name>
-    </ProjectReference>
+    <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\PrinterHealthWeb\PrinterHealthWeb.csproj">
+      <Project>{603e73c6-442a-4791-a44b-cfd1060ddc39}</Project>
+      <Name>PrinterHealthWeb</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PrinterHealth\PrinterHealth.csproj">
+      <Project>{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}</Project>
+      <Name>PrinterHealth</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

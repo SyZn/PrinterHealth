@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>PrinterHealth</RootNamespace>
     <AssemblyName>PrinterHealth</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,16 +31,24 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=1.2.13.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.7.0.1-beta1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config\PrinterHealthConfig.cs" />
+    <Compile Include="Config\Printer.cs" />
     <Compile Include="CookieWebClient.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="HealthMonitor.cs" />
     <Compile Include="Model\IMarker.cs" />
     <Compile Include="Model\IMeasuredMedium.cs" />
     <Compile Include="Model\IMeasuredMarker.cs" />
@@ -50,6 +59,7 @@
     <Compile Include="Model\IStatusInfo.cs" />
     <Compile Include="Model\IPrinter.cs" />
     <Compile Include="Model\StatusLevel.cs" />
+    <Compile Include="PrinterHealthUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

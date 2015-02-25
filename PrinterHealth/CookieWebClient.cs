@@ -8,14 +8,20 @@ namespace PrinterHealth
         public readonly CookieContainer CookieJar = new CookieContainer();
 
         public bool IgnoreCookiePaths { get; set; }
+        public bool DontVerifyHttps { get; set; }
 
         protected override WebRequest GetWebRequest(Uri address)
         {
             var webRequest = base.GetWebRequest(address);
+
             var httpRequest = webRequest as HttpWebRequest;
             if (httpRequest != null)
             {
                 httpRequest.CookieContainer = CookieJar;
+                if (DontVerifyHttps)
+                {
+                    httpRequest.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                }
             }
             return webRequest;
         }
