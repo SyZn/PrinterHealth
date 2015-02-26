@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PrinterHealth.Model
 {
@@ -21,6 +22,12 @@ namespace PrinterHealth.Model
         /// A collection of problems that are currently preventing the printer from performing one of its core tasks.
         /// </summary>
         IReadOnlyCollection<IStatusInfo> CurrentStatusMessages { get; }
+
+        /// <summary>
+        /// The date/time when the information about this printer was last updated, or <c>null</c> if it hasn't been
+        /// fetched (yet).
+        /// </summary>
+        DateTimeOffset? LastUpdated { get; }
 
         /// <summary>
         /// The number of currently queued jobs.

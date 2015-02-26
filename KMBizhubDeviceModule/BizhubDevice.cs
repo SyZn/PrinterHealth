@@ -25,6 +25,7 @@ namespace KMBizhubDeviceModule
         protected List<BizhubPaper> BizhubMedia;
         protected List<BizhubStatus> BizhubStatus;
         protected int BizhubJobCount;
+        protected DateTimeOffset? BizhubLastUpdated;
 
         /// <summary>
         /// The endpoint to which to post login requests.
@@ -68,11 +69,12 @@ namespace KMBizhubDeviceModule
         protected BizhubDevice(JObject parameters)
         {
             Config = new BizhubDeviceConfig(parameters);
-            Client = new CookieWebClient { IgnoreCookiePaths = true, DontVerifyHttps = !Config.VerifyHttpsCertificate };
+            Client = new CookieWebClient { IgnoreCookiePaths = true, DontVerifyHttps = !Config.VerifyHttpsCertificate, TimeoutSeconds = Config.TimeoutSeconds };
             BizhubMarkers = new List<BizhubToner>();
             BizhubMedia = new List<BizhubPaper>();
             BizhubJobCount = 0;
             BizhubStatus = new List<BizhubStatus>();
+            BizhubLastUpdated = null;
         }
 
         /// <summary>
@@ -238,6 +240,11 @@ namespace KMBizhubDeviceModule
             get { lock (_lock) { return BizhubJobCount; } }
         }
 
+        public virtual DateTimeOffset? LastUpdated
+        {
+            get { lock (_lock) { return BizhubLastUpdated; } }
+        }
+
         public virtual void CleanupBrokenJobs()
         {
             Login();
@@ -311,7 +318,7 @@ namespace KMBizhubDeviceModule
                         styleClasses.Add(color.ToLowerInvariant());
                     }
 
-                    newMarkers.Add(new BizhubToner(percent, isEmpty, isLow, color + " Toner", styleClasses));
+                    newMarkers.Add(new BizhubToner(percent, isEmpty, isLow, color, styleClasses));
                 }
             }
 
@@ -432,6 +439,7 @@ namespace KMBizhubDeviceModule
                 BizhubMedia = newMedia;
                 BizhubStatus = newStatus;
                 BizhubJobCount = newJobCount;
+                BizhubLastUpdated = DateTimeOffset.Now;
             }
         }
     }

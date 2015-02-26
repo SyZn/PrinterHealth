@@ -181,13 +181,18 @@ namespace PrinterHealthWeb
                         {"description", statusMessage.Description}
                     }).ToArray();
 
+                    var lastUpdatedString = printer.Value.LastUpdated.HasValue
+                        ? printer.Value.LastUpdated.Value.ToString("dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture)
+                        : "never";
+
                     return new Hash
                     {
                         {"name", printer.Key},
                         {"active_jobs", printer.Value.JobCount.ToString(CultureInfo.InvariantCulture)},
                         {"media", media},
                         {"markers", markers},
-                        {"status_messages", statusMessages}
+                        {"status_messages", statusMessages},
+                        {"last_updated", lastUpdatedString}
                     };
                 }).ToArray();
 

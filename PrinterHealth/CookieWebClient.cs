@@ -9,10 +9,15 @@ namespace PrinterHealth
 
         public bool IgnoreCookiePaths { get; set; }
         public bool DontVerifyHttps { get; set; }
+        public int TimeoutSeconds { get; set; }
 
         protected override WebRequest GetWebRequest(Uri address)
         {
             var webRequest = base.GetWebRequest(address);
+            if (webRequest != null)
+            {
+                webRequest.Timeout = TimeoutSeconds*1000;
+            }
 
             var httpRequest = webRequest as HttpWebRequest;
             if (httpRequest != null)

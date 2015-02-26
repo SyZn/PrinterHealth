@@ -32,12 +32,18 @@ namespace KMBizhubDeviceModule
         public bool VerifyHttpsCertificate { get; set; }
 
         /// <summary>
+        /// How many seconds to wait for a response from the printer.
+        /// </summary>
+        public int TimeoutSeconds { get; set; }
+
+        /// <summary>
         /// The time to wait between deleting failed jobs and re-checking for them.
         /// </summary>
         public int FailedJobRepeatTimeSeconds { get; set; }
 
         public BizhubDeviceConfig(JObject obj)
         {
+            TimeoutSeconds = 10;
             FailedJobRepeatTimeSeconds = 30;
             VerifyHttpsCertificate = true;
             PerformLogin = true;

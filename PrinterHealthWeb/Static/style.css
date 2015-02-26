@@ -41,6 +41,10 @@
     text-align: center;
 }
 
+.printer .last-updated {
+    font-size: 70%;
+}
+
 .status-message.error {
     background-color: #ff9999;
 }
@@ -59,7 +63,7 @@
     height: 10px;
 }
 
-.status-box.full {
+.status-box.full, .status-box.unknown {
     background-color: #00ff00;
 }
 
@@ -98,4 +102,12 @@
 
 .marker.black .measure-bar {
     background-color: #000000;
+}
+
+.marker .measure-box.low {
+    border: 2px solid #ffcc00;
+}
+
+.marker .measure-box.empty {
+    border: 2px solid #ff0000;
 }
