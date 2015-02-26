@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Device Modules", "Device Mo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OceColorWave6x0DeviceModule", "OceColorWave6x0DeviceModule\OceColorWave6x0DeviceModule.csproj", "{4B7AAB41-D6C5-4BD4-8281-9EDA2A6380F8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrinterHealthWebService", "PrinterHealthWebService\PrinterHealthWebService.csproj", "{4315B35C-0157-4795-90CD-2E69741BF33E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,10 @@ Global
 		{4B7AAB41-D6C5-4BD4-8281-9EDA2A6380F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B7AAB41-D6C5-4BD4-8281-9EDA2A6380F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B7AAB41-D6C5-4BD4-8281-9EDA2A6380F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4315B35C-0157-4795-90CD-2E69741BF33E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4315B35C-0157-4795-90CD-2E69741BF33E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4315B35C-0157-4795-90CD-2E69741BF33E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4315B35C-0157-4795-90CD-2E69741BF33E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
