@@ -34,6 +34,10 @@
     width: 70%;
 }
 
+.printer .last-updated.outdated {
+    color: #ff0000;
+}
+
 .printer .markers .marker,
 .printer .media .medium {
     display: inline-block;

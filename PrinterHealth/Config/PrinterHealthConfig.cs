@@ -22,11 +22,17 @@ namespace PrinterHealth.Config
         /// </summary>
         public double UpdateIntervalMinutes { get; set; }
 
+        /// <summary>
+        /// Number of minutes after which a printer status is considered outdated.
+        /// </summary>
+        public double OutdatedIntervalMinutes { get; set; }
+
         public PrinterHealthConfig(JObject obj)
         {
             Printers = new List<Printer>();
             ListenPort = 8084;
             UpdateIntervalMinutes = 5.0;
+            OutdatedIntervalMinutes = 15.0;
 
             JsonSerializer.Create().Populate(obj.CreateReader(), this);
         }

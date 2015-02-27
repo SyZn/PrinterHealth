@@ -11,6 +11,7 @@ using System.Threading;
 using DotLiquid;
 using log4net;
 using PrinterHealth;
+using PrinterHealth.Config;
 using PrinterHealth.Model;
 
 namespace PrinterHealthWeb
@@ -31,13 +32,15 @@ namespace PrinterHealthWeb
 
         protected HttpListener Listener;
         private Thread _handlerThread;
+        private readonly PrinterHealthConfig _config;
         private readonly HealthMonitor _monitor;
 
-        public HttpListenerResponder(HealthMonitor monitor, int port)
+        public HttpListenerResponder(PrinterHealthConfig config, HealthMonitor monitor)
         {
+            _config = config;
             _monitor = monitor;
             Listener = new HttpListener();
-            Listener.Prefixes.Add(string.Format("http://+:{0}/", port));
+            Listener.Prefixes.Add(string.Format("http://+:{0}/", config.ListenPort));
         }
 
         protected static void SendPlainTextResponse(HttpListenerResponse resp, int statusCode, string statusDescription, string body)
@@ -184,7 +187,9 @@ namespace PrinterHealthWeb
                     var lastUpdatedString = printer.Value.LastUpdated.HasValue
                         ? printer.Value.LastUpdated.Value.ToString("dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture)
                         : "never";
-
+                    var lastUpdateTimely = printer.Value.LastUpdated.HasValue &&
+                        (DateTimeOffset.Now - printer.Value.LastUpdated.Value).TotalMinutes <= _config.OutdatedIntervalMinutes;
+                    
                     return new Hash
                     {
                         {"name", printer.Key},
@@ -192,7 +197,8 @@ namespace PrinterHealthWeb
                         {"media", media},
                         {"markers", markers},
                         {"status_messages", statusMessages},
-                        {"last_updated", lastUpdatedString}
+                        {"last_updated", lastUpdatedString},
+                        {"last_updated_timeliness_class", lastUpdateTimely ? "timely" : "outdated"}
                     };
                 }).ToArray();
 

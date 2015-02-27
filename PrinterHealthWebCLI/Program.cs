@@ -42,7 +42,7 @@ namespace PrinterHealthWebCLI
             // (starts automatically)
             
             // start the HTTP responder
-            var httpResponder = new HttpListenerResponder(healthMonitor, config.ListenPort);
+            var httpResponder = new HttpListenerResponder(config, healthMonitor);
 
             httpResponder.Start();
 

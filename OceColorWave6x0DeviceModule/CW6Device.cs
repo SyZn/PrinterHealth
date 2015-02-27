@@ -186,6 +186,11 @@ namespace OceColorWave6x0DeviceModule
         {
             Config = new CW6DeviceConfig(jo);
             Client = new CookieWebClient {TimeoutSeconds = Config.TimeoutSeconds};
+            CWMarkers = new List<CW6Toner>();
+            CWMedia = new List<CW6Paper>();
+            CWStatusMessages = new List<CW6Status>();
+            CWLastUpdated = null;
+            CWJobCount = 0;
         }
     }
 }

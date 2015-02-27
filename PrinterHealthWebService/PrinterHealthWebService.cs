@@ -26,7 +26,7 @@ namespace PrinterHealthWebService
             // (starts automatically)
 
             // start the HTTP responder
-            _responder = new HttpListenerResponder(_monitor, _config.ListenPort);
+            _responder = new HttpListenerResponder(_config, _monitor);
             _responder.Start();
         }
 

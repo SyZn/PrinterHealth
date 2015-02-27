@@ -4,6 +4,9 @@
   <meta charset="utf-8"/>
   <title>Printer Health</title>
   <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+  <script type="text/javascript">
+    window.setTimeout(function () { window.location.reload(); }, 5*60*1000);
+  </script>
 </head>
 <body>
 <div class="printers">
@@ -21,7 +24,7 @@
         </div>
         {% endfor %}
       </div>
-      <div class="last-updated">Last updated: {{ printer.last_updated | escape }}</div>
+      <div class="last-updated {{ printer.last_updated_timeliness_class | escape }}">Last updated: {{ printer.last_updated | escape }}</div>
     </div>
     <div class="right-column">
       <div class="media">
@@ -29,7 +32,7 @@
         <div class="medium {{ medium.style_classes | escape }}">
           <div class="description">{{ medium.description | escape }}</div>
           {% if medium.is_measurable %}
-          <div class="measure-box {{ medium.status_class | escape }}">
+          <div class="measure-box {{ medium.status_class | escape }}" title="{{ medium.percentage | escape }}%">
             <div class="measure-bar" style="height:{{ medium.percentage | escape }}%"></div>
           </div>
           {% else %}
@@ -43,7 +46,7 @@
         <div class="marker {{ marker.style_classes | escape }}">
           <div class="description">{{ marker.description | escape }}</div>
           {% if marker.is_measurable %}
-          <div class="measure-box {{ marker.status_class | escape }}">
+          <div class="measure-box {{ marker.status_class | escape }}" title="{{ marker.percentage | escape }}%">
             <div class="measure-bar" style="height:{{ marker.percentage | escape }}%"></div>
           </div>
           {% else %}
