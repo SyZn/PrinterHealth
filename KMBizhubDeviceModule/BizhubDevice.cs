@@ -247,6 +247,11 @@ namespace KMBizhubDeviceModule
 
         public virtual void CleanupBrokenJobs()
         {
+            if (!Config.DeleteFailedPrintJobs)
+            {
+                return;
+            }
+
             Login();
             bool jobFailed = true;
 

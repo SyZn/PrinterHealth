@@ -41,12 +41,18 @@ namespace KMBizhubDeviceModule
         /// </summary>
         public int FailedJobRepeatTimeSeconds { get; set; }
 
+        /// <summary>
+        /// Whether failed print jobs are to be deleted on this device.
+        /// </summary>
+        public bool DeleteFailedPrintJobs { get; set; }
+
         public BizhubDeviceConfig(JObject obj)
         {
             TimeoutSeconds = 10;
             FailedJobRepeatTimeSeconds = 30;
             VerifyHttpsCertificate = true;
             PerformLogin = true;
+            DeleteFailedPrintJobs = true;
 
             // populate with the passed settings
             JsonSerializer.Create().Populate(obj.CreateReader(), this);
