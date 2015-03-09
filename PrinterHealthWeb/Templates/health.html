@@ -13,7 +13,11 @@
   {% for printer in printers %}
   <div class="printer">
     <div class="left-column">
-      <div class="name">{{ printer.name | escape }}</div>
+      <div class="name">
+        {% if printer.has_web_interface %}<a class="web-interface-uri" href="{{ printer.web_interface_uri | escape }}" target="_blank">{% endif %}
+          {{ printer.name | escape }}
+        {% if printer.has_web_interface %}</a>{% endif %}
+      </div>
       <div class="job-count">
         <span class="job-count">{{ printer.active_jobs | escape }}</span> jobs
       </div>

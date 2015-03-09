@@ -193,6 +193,8 @@ namespace PrinterHealthWeb
                     return new Hash
                     {
                         {"name", printer.Key},
+                        {"has_web_interface", (printer.Value.WebInterfaceUri != null)},
+                        {"web_interface_uri", printer.Value.WebInterfaceUri},
                         {"active_jobs", printer.Value.JobCount.ToString(CultureInfo.InvariantCulture)},
                         {"media", media},
                         {"markers", markers},

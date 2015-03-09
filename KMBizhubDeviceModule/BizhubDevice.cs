@@ -245,6 +245,11 @@ namespace KMBizhubDeviceModule
             get { lock (_lock) { return BizhubLastUpdated; } }
         }
 
+        public virtual string WebInterfaceUri
+        {
+            get { return string.Format("http{0}://{1}/", Config.Https ? "s" : "", Config.Hostname); }
+        }
+
         public virtual void CleanupBrokenJobs()
         {
             if (!Config.DeleteFailedPrintJobs)

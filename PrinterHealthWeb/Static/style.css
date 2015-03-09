@@ -3,6 +3,11 @@
     width: 800px;
 }
 
+a:link, a:visited {
+    color: #0066ff;
+    text-decoration: none;
+}
+
 .printer {
     padding-top: 1em;
     margin-bottom: 1em;

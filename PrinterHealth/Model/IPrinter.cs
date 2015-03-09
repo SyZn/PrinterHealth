@@ -35,6 +35,11 @@ namespace PrinterHealth.Model
         int JobCount { get; }
 
         /// <summary>
+        /// The URI to this printer's web interface, or <c>null</c> if the printer has none.
+        /// </summary>
+        string WebInterfaceUri { get; }
+
+        /// <summary>
         /// Performs an update of the cached values.
         /// </summary>
         void Update();

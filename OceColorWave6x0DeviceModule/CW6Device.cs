@@ -73,6 +73,11 @@ namespace OceColorWave6x0DeviceModule
             get { return CWJobCount; }
         }
 
+        public virtual string WebInterfaceUri
+        {
+            get { return string.Format("http://{0}/", Config.Hostname); }
+        }
+
         protected static string LetterToColor(string letter)
         {
             switch (letter)
