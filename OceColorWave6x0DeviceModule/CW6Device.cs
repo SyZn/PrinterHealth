@@ -100,6 +100,7 @@ namespace OceColorWave6x0DeviceModule
             switch (image)
             {
                 case "/SystemMonitor/images/statusNeutral.gif":
+                case "/SystemMonitor/images/statusActive.gif":
                     return StatusLevel.Info;
                 case "/SystemMonitor/images/statusWarning.gif":
                     return StatusLevel.HardWarning;
