@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Xml;
+using log4net;
 using Newtonsoft.Json.Linq;
 using PrinterHealth;
 using PrinterHealth.Model;
@@ -16,6 +18,8 @@ namespace KMBizhubDeviceModule
     /// </summary>
     public abstract class BizhubDevice : IPrinterWithJobCleanup
     {
+        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
         private readonly object _lock = new object();
 
         protected const string PaperJamCode = "140005";
@@ -167,6 +171,8 @@ namespace KMBizhubDeviceModule
 
         protected void DeleteJob(string jobID)
         {
+            Logger.InfoFormat("{0}: deleting failed job {1}", this, jobID);
+
             var values = new NameValueCollection
             {
                 {"func", "PSL_J_DEL"},
