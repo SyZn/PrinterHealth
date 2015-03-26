@@ -30,7 +30,9 @@ namespace PrinterHealth
         {
             var configBody = File.ReadAllText(Path.Combine(ProgramDirectory, "Config.json"), Utf8NoBom);
             var jo = JObject.Parse(configBody);
-            return new PrinterHealthConfig(jo);
+            var config = new PrinterHealthConfig();
+            config.LoadFromJson(jo);
+            return config;
         }
 
         /// <summary>

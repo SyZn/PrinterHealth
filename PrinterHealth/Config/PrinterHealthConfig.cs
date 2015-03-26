@@ -27,14 +27,17 @@ namespace PrinterHealth.Config
         /// </summary>
         public double OutdatedIntervalMinutes { get; set; }
 
-        public PrinterHealthConfig(JObject obj)
+        public void LoadFromJson(JObject obj)
+        {
+            JsonSerializer.Create().Populate(obj.CreateReader(), this);
+        }
+
+        public PrinterHealthConfig()
         {
             Printers = new List<Printer>();
             ListenPort = 8084;
             UpdateIntervalMinutes = 5.0;
             OutdatedIntervalMinutes = 15.0;
-
-            JsonSerializer.Create().Populate(obj.CreateReader(), this);
         }
     }
 }
