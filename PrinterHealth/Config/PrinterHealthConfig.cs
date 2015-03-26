@@ -29,7 +29,7 @@ namespace PrinterHealth.Config
 
         public void LoadFromJson(JObject obj)
         {
-            JsonSerializer.Create().Populate(obj.CreateReader(), this);
+            JsonSerializer.Create(new JsonSerializerSettings()).Populate(obj.CreateReader(), this);
         }
 
         public PrinterHealthConfig()
