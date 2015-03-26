@@ -150,6 +150,7 @@ namespace OceColorWave6x0DeviceModule
             int i = 1;
             var newRolls = newRollsJson.Values.Select(rj => new CW6Paper(
                 rj.ImagePath == "/SystemMonitor/images/mediaRollEmpty.gif",
+                string.Format("{0}//{1}", rj.Type.ToLowerInvariant(), rj.Size.ToLowerInvariant()),
                 string.Format("R{0} ({1} {2})", i++, ShortenMediaName(rj.Type), PaperSizeSplitRegex.Match(rj.Size).Groups[1].Value),
                 "roll",
                 PaperSizeSplitRegex.Split(rj.Size)[0].Replace(" ", "-").ToLowerInvariant(),

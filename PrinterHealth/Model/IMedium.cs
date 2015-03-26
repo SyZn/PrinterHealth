@@ -18,6 +18,12 @@ namespace PrinterHealth.Model
         IEnumerable<string> StyleClasses { get; }
 
         /// <summary>
+        /// A unique string describing this medium. Not necessarily human-readable, but same media must have the same
+        /// <see cref="CodeName"/>.
+        /// </summary>
+        string CodeName { get; }
+
+        /// <summary>
         /// A short description of this medium.
         /// </summary>
         string Description { get; }

@@ -352,6 +352,15 @@ namespace KMBizhubDeviceModule
                     var mediumState = (mediumStateNode != null) ? mediumStateNode.Value : "";
 
                     var paperNameNode = mediumElement.SelectSingleNode("./CurrentPaper/Size/Name/text()");
+                    var sizeCodeNode = mediumElement.SelectSingleNode("./CurrentPaper/Size/SizeCode/text()");
+                    var paperSizeName = (sizeCodeNode != null)
+                        ? sizeCodeNode.Value
+                        : ((paperNameNode != null) ? paperNameNode.Value : "");
+
+                    var mediaTypeNode = mediumElement.SelectSingleNode("./CurrentPaper/MediaType/text()");
+                    var mediaType = (mediaTypeNode != null) ? mediaTypeNode.Value : "";
+
+                    var codeName = string.Format("{0}//{1}", paperSizeName, mediaType);
 
                     var mediumDescription = mediumName;
                     if (paperNameNode != null)
@@ -386,7 +395,7 @@ namespace KMBizhubDeviceModule
                         styleClasses.Add(paperNameNode.Value.ToLowerInvariant());
                     }
 
-                    newMedia.Add(new BizhubPaper(isEmpty, isLow, mediumDescription, styleClasses));
+                    newMedia.Add(new BizhubPaper(isEmpty, isLow, codeName, mediumDescription, styleClasses));
                 }
             }
 
