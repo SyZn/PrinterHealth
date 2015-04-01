@@ -1,6 +1,6 @@
 ﻿using PrinterHealth.Model;
 
-namespace KMBizhubDeviceModule
+namespace KMBizhubHealthModule
 {
     public class BizhubStatus : IStatusInfo
     {

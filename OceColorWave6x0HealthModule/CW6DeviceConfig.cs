@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace OceColorWave6x0DeviceModule
+namespace OceColorWave6x0HealthModule
 {
     [JsonObject(MemberSerialization.OptOut)]
     public class CW6DeviceConfig

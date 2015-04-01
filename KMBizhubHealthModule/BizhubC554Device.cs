@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace KMBizhubDeviceModule
+namespace KMBizhubHealthModule
 {
     /// <summary>
     /// Device access class supporting Konica Minolta C454, C554, and C554e.

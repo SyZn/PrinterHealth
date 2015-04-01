@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace OceColorWave6x0DeviceModule
+namespace OceColorWave6x0HealthModule
 {
     internal class CW6JsonRoll
     {

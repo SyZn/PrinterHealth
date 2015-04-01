@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using PrinterHealth.Model;
 
-namespace OceColorWave6x0DeviceModule
+namespace OceColorWave6x0HealthModule
 {
     public class CW6Paper : IMedium
     {

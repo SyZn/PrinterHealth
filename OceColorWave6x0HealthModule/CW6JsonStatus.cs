@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace OceColorWave6x0DeviceModule
+namespace OceColorWave6x0HealthModule
 {
     internal static class CW6JsonStatus
     {

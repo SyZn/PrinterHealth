@@ -7,8 +7,8 @@
     <ProjectGuid>{4B7AAB41-D6C5-4BD4-8281-9EDA2A6380F8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OceColorWave6x0DeviceModule</RootNamespace>
-    <AssemblyName>OceColorWave6x0DeviceModule</AssemblyName>
+    <RootNamespace>OceColorWave6x0HealthModule</RootNamespace>
+    <AssemblyName>OceColorWave6x0HealthModule</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

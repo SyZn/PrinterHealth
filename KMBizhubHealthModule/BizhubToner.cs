@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using PrinterHealth.Model;
 
-namespace KMBizhubDeviceModule
+namespace KMBizhubHealthModule
 {
     public class BizhubToner : IMeasuredMarker
     {

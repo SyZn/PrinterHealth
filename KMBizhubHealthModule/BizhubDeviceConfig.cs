@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace KMBizhubDeviceModule
+namespace KMBizhubHealthModule
 {
     [JsonObject(MemberSerialization.OptOut)]
     public class BizhubDeviceConfig

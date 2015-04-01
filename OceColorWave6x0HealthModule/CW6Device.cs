@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using PrinterHealth;
 using PrinterHealth.Model;
 
-namespace OceColorWave6x0DeviceModule
+namespace OceColorWave6x0HealthModule
 {
     public class CW6Device : IPrinter
     {

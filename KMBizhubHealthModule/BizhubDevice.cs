@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 using PrinterHealth;
 using PrinterHealth.Model;
 
-namespace KMBizhubDeviceModule
+namespace KMBizhubHealthModule
 {
     /// <summary>
     /// Device access class supporting Konica Minolta bizhub devices.
