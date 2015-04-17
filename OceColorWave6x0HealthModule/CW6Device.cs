@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using log4net;
@@ -193,6 +194,7 @@ namespace OceColorWave6x0HealthModule
         {
             Config = new CW6DeviceConfig(jo);
             Client = new CookieWebClient {TimeoutSeconds = Config.TimeoutSeconds};
+            Client.Headers.Add(HttpRequestHeader.AcceptLanguage, "en");
             CWMarkers = new List<CW6Toner>();
             CWMedia = new List<CW6Paper>();
             CWStatusMessages = new List<CW6Status>();
