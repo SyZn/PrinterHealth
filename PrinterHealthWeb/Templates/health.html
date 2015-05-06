@@ -24,7 +24,7 @@
       <div class="status-messages">
         {% for status_message in printer.status_messages %}
         <div class="status-message {{ status_message.level_class | escape }}">
-          {{ status_message.description | escape }}
+          {{ status_message.description | escape | soft_breaks }}
         </div>
         {% endfor %}
       </div>

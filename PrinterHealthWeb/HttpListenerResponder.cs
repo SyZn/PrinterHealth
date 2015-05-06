@@ -209,7 +209,7 @@ namespace PrinterHealthWeb
                     {"printers", printerHashes}
                 };
 
-                var rendered = template.Render(hash);
+                var rendered = template.Render(new RenderParameters { LocalVariables = hash, Filters = new[] {typeof(PrinterHealthFilters)} });
                 var renderedBytes = PrinterHealthUtils.Utf8NoBom.GetBytes(rendered);
 
                 SendOkResponse(ctx.Response, "text/html; charset=utf-8", renderedBytes);
