@@ -49,27 +49,27 @@ namespace OceColorWave6x0HealthModule
 
         protected static readonly Regex PaperSizeSplitRegex = new Regex("^(.+) [(](.+)[)]$");
 
-        public IReadOnlyCollection<IMarker> Markers
+        public virtual IReadOnlyCollection<IMarker> Markers
         {
             get { return CWMarkers; }
         }
 
-        public IReadOnlyCollection<IMedium> Media
+        public virtual IReadOnlyCollection<IMedium> Media
         {
             get { return CWMedia; }
         }
 
-        public IReadOnlyCollection<IStatusInfo> CurrentStatusMessages
+        public virtual IReadOnlyCollection<IStatusInfo> CurrentStatusMessages
         {
             get { return CWStatusMessages; }
         }
 
-        public DateTimeOffset? LastUpdated
+        public virtual DateTimeOffset? LastUpdated
         {
             get { return CWLastUpdated; }
         }
 
-        public int JobCount
+        public virtual int JobCount
         {
             get { return CWJobCount; }
         }

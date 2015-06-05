@@ -42,6 +42,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CW6FakeDevice.cs" />
     <Compile Include="CW6JsonRoll.cs" />
     <Compile Include="CW6DeviceConfig.cs" />
     <Compile Include="CW6Device.cs" />
