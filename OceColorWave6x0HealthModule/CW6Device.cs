@@ -147,7 +147,7 @@ namespace OceColorWave6x0HealthModule
             var statusObject = FetchJson<CW6JsonStatus.Status>(StatusEndpoint);
 
             // paper
-            var newRollsJson = CW6JsonRoll.ParseDetailedMedia(statusObject.DetailedMedia);
+            var newRollsJson = CW6JsonRoll.ParseDetailedMedia(statusObject.DetailedMedia, Config.MediaTypeNormalization);
             int i = 1;
             var newRolls = newRollsJson.Values.Select(rj => new CW6Paper(
                 rj.ImagePath == "/SystemMonitor/images/mediaRollEmpty.gif",

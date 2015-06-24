@@ -10,7 +10,7 @@ namespace OceColorWave6x0HealthModule
         public string Size { get; set; }
         public string Type { get; set; }
 
-        public static IDictionary<string, CW6JsonRoll> ParseDetailedMedia(CW6JsonStatus.DetailedMedia detailedMedia)
+        public static IDictionary<string, CW6JsonRoll> ParseDetailedMedia(CW6JsonStatus.DetailedMedia detailedMedia, IReadOnlyDictionary<string, string> mediaTypeNormalization)
         {
             var ret = new SortedDictionary<string, CW6JsonRoll>();
 
@@ -32,6 +32,11 @@ namespace OceColorWave6x0HealthModule
                 var type = detailedMedia.Types
                     .FirstOrDefault(t => t.Source == source)
                     .Text;
+
+                if (mediaTypeNormalization.ContainsKey(type))
+                {
+                    type = mediaTypeNormalization[type];
+                }
 
                 ret[source] = new CW6JsonRoll
                 {

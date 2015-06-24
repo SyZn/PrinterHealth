@@ -22,10 +22,13 @@ namespace OceColorWave6x0HealthModule
         /// </summary>
         public Dictionary<string, string> ShortMediaTypeNames { get; set; }
 
+        public Dictionary<string, string> MediaTypeNormalization { get; set; }
+
         public CW6DeviceConfig(JObject obj)
         {
             TimeoutSeconds = 10;
             ShortMediaTypeNames = new Dictionary<string, string>();
+            MediaTypeNormalization = new Dictionary<string, string>();
 
             // populate with the passed settings
             JsonSerializer.Create().Populate(obj.CreateReader(), this);
