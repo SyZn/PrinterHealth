@@ -18,6 +18,16 @@ namespace OceColorWave6x0HealthModule
         public int TimeoutSeconds { get; set; }
 
         /// <summary>
+        /// Whether HTTPS should be used.
+        /// </summary>
+        public bool Https { get; set; }
+
+        /// <summary>
+        /// Whether HTTPS certificates should be verified.
+        /// </summary>
+        public bool VerifyHttpsCertificate { get; set; }
+
+        /// <summary>
         /// Mapping from full to short media type names.
         /// </summary>
         public Dictionary<string, string> ShortMediaTypeNames { get; set; }

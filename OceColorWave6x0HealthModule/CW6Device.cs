@@ -76,7 +76,7 @@ namespace OceColorWave6x0HealthModule
 
         public virtual string WebInterfaceUri
         {
-            get { return string.Format("http://{0}/", Config.Hostname); }
+            get { return string.Format("http{0}://{1}/", Config.Https ? "s" : "", Config.Hostname); }
         }
 
         protected static string LetterToColor(string letter)
@@ -126,7 +126,8 @@ namespace OceColorWave6x0HealthModule
         protected virtual Uri GetUri(string endpoint)
         {
             return new Uri(string.Format(
-                "http://{0}{1}",
+                "http{0}://{1}{2}",
+                Config.Https ? "s" : "",
                 Config.Hostname,
                 endpoint
             ));
@@ -193,7 +194,7 @@ namespace OceColorWave6x0HealthModule
         public CW6Device(JObject jo)
         {
             Config = new CW6DeviceConfig(jo);
-            Client = new CookieWebClient {TimeoutSeconds = Config.TimeoutSeconds};
+            Client = new CookieWebClient {TimeoutSeconds = Config.TimeoutSeconds, DontVerifyHttps = !Config.VerifyHttpsCertificate};
             Client.Headers.Add(HttpRequestHeader.AcceptLanguage, "en");
             CWMarkers = new List<CW6Toner>();
             CWMedia = new List<CW6Paper>();
