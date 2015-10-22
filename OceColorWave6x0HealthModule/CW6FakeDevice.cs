@@ -5,7 +5,7 @@ using PrinterHealth.Model;
 
 namespace OceColorWave6x0HealthModule
 {
-    public class CW6FakeDevice : IPrinter
+    public class CW6FakeDevice : IPrinterToKeepWarm
     {
         public DateTimeOffset? LastUpdated { get; protected set; }
 
@@ -60,6 +60,11 @@ namespace OceColorWave6x0HealthModule
         public virtual void Update()
         {
             LastUpdated = DateTimeOffset.Now;
+        }
+
+        public void KeepWarm()
+        {
+            // done!
         }
     }
 }

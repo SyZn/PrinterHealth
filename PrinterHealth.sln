@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrinterHealth", "PrinterHealth\PrinterHealth.csproj", "{5B2727A1-E2E4-47D5-8FAA-59F21990F1E9}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OceColorWave6x0HealthModule", "OceColorWave6x0HealthModule\OceColorWave6x0HealthModule.csproj", "{4B7AAB41-D6C5-4BD4-8281-9EDA2A6380F8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrinterHealthWebService", "PrinterHealthWebService\PrinterHealthWebService.csproj", "{4315B35C-0157-4795-90CD-2E69741BF33E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeepWarmCLI", "KeepWarmCLI\KeepWarmCLI.csproj", "{EBF67B12-5D36-45CB-8729-37FFB19ED030}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,10 @@ Global
 		{4315B35C-0157-4795-90CD-2E69741BF33E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4315B35C-0157-4795-90CD-2E69741BF33E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4315B35C-0157-4795-90CD-2E69741BF33E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBF67B12-5D36-45CB-8729-37FFB19ED030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBF67B12-5D36-45CB-8729-37FFB19ED030}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBF67B12-5D36-45CB-8729-37FFB19ED030}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBF67B12-5D36-45CB-8729-37FFB19ED030}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

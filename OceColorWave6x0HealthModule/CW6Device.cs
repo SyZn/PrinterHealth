@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using log4net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,7 +16,7 @@ using PrinterHealth.Model;
 
 namespace OceColorWave6x0HealthModule
 {
-    public class CW6Device : IPrinter
+    public class CW6Device : IPrinterToKeepWarm
     {
         private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -36,6 +40,16 @@ namespace OceColorWave6x0HealthModule
         /// The endpoint at which to request the job list.
         /// </summary>
         public const string JobListEndpoint = "/owt/list_content_json.jsp?url=%2FQueueManager%2Fqueue_list_data.jsp&id=queue&bundle=queuemanager&itemCount=15";
+
+        /// <summary>
+        /// The endpoint at which to submit jobs.
+        /// </summary>
+        public const string SubmitJobEndpoint = "/JobEditor/submitJob";
+
+        /// <summary>
+        /// The endpoint at which to delete a job.
+        /// </summary>
+        public const string DeleteJobEndpoint = "/Docbox/deleteJobs";
 
         /// <summary>
         /// The image path to a paper roll that is available.
@@ -188,6 +202,112 @@ namespace OceColorWave6x0HealthModule
                 CWStatusMessages = newStatusList;
                 CWLastUpdated = DateTimeOffset.Now;
                 CWJobCount = newJobCount;
+            }
+        }
+
+        public void KeepWarm()
+        {
+            // find a nice boundary
+            const string boundaryPrefix = "----PrinterHealthFormBoundary";
+            const int boundarySuffixLength = 16;
+            var boundaryGenerator = new Random();
+            var boundary = new StringBuilder(boundaryPrefix);
+            for (int i = 0; i < boundarySuffixLength; ++i)
+            {
+                // A-Z + a-z + 0-9
+                int num = boundaryGenerator.Next(62);
+                char b;
+                if (num < 26)
+                {
+                    b = (char) ('A' + num);
+                }
+                else if (num < 52)
+                {
+                    b = (char) ('a' + num - 26);
+                }
+                else
+                {
+                    Debug.Assert(num < 62);
+                    b = (char) ('0' + num - 52);
+                }
+                boundary.Append(b);
+            }
+
+            // prepare the empty job
+            var jobSubmissionBodyString = string.Format(
+                CultureInfo.InvariantCulture,
+                CW6Data.KeepWarmJobUpload,
+                boundary.ToString(),
+                CW6Data.KeepWarmJob
+            );
+            var jobSubmissionBody = jobSubmissionBodyString.ToBytesNaiveEncoding().ToArray();
+
+            // submit it
+            var uploadRequest = WebRequest.CreateHttp(GetUri(SubmitJobEndpoint));
+            uploadRequest.Method = "POST";
+            uploadRequest.ContentType = $"multipart/form-data; boundary={boundary}";
+            uploadRequest.ContentLength = jobSubmissionBody.Length;
+            using (var requestStream = uploadRequest.GetRequestStream())
+            {
+                requestStream.Write(jobSubmissionBody, 0, jobSubmissionBody.Length);
+                requestStream.Close();
+            }
+            using (uploadRequest.GetResponse())
+            {
+            }
+
+            // poll until the job appears
+            long? warmJobID = null;
+            for (;;)
+            {
+                var jobsJson = FetchJson<JObject>(JobListEndpoint);
+                var jobsJsonBody = jobsJson["body"] as JObject;
+                var jobsJsonRow = jobsJsonBody?["row"] as JArray;
+                if (jobsJsonRow != null)
+                {
+                    foreach (var row in jobsJsonRow.OfType<JObject>())
+                    {
+                        var rowColumns = row["column"] as JArray;
+                        if (rowColumns == null || rowColumns.Count <= 2)
+                        {
+                            continue;
+                        }
+
+                        var checkboxColumn = rowColumns[0] as JObject;
+                        var jobNameColumn = rowColumns[2] as JObject;
+                        if (checkboxColumn?.Property("text") != null && ((string)jobNameColumn?["text"]) == "KEEPWARM")
+                        {
+                            warmJobID = long.Parse((string)checkboxColumn["text"]);
+                        }
+                    }
+                }
+
+                if (!warmJobID.HasValue)
+                {
+                    // sleep!
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+
+                    // again!
+                    continue;
+                }
+
+                // found; delete job
+                var deleteBody = Encoding.ASCII.GetBytes(string.Format(CultureInfo.InvariantCulture, "jobTypes=queue&check={0}", warmJobID.Value));
+                var deleteRequest = WebRequest.CreateHttp(GetUri(DeleteJobEndpoint));
+                deleteRequest.Method = "POST";
+                deleteRequest.ContentType = "application/x-www-form-urlencoded";
+                deleteRequest.ContentLength = deleteBody.Length;
+                using (var requestStream = deleteRequest.GetRequestStream())
+                {
+                    requestStream.Write(deleteBody, 0, deleteBody.Length);
+                    requestStream.Close();
+                }
+                using (deleteRequest.GetResponse())
+                {
+                }
+
+                // done
+                break;
             }
         }
 

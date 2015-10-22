@@ -16,6 +16,8 @@ namespace PrinterHealth
         private bool _disposed = false;
         private readonly object _interlock = new object();
         private readonly Timer _timer;
+        private Timer _keepWarmTimer;
+        private readonly TimeSpan _keepWarmSpan;
         private readonly SortedDictionary<string, IPrinter> _printers;
 
         public IDictionary<string, IPrinter> Printers
@@ -45,6 +47,43 @@ namespace PrinterHealth
                 }
 
                 Logger.DebugFormat("{0} updated", printer.Key);
+            }
+        }
+
+        public virtual void KeepWarmActuallyPerform()
+        {
+            foreach (var printer in _printers)
+            {
+                var keepWarmPrinter = printer.Value as IPrinterToKeepWarm;
+                if (keepWarmPrinter == null)
+                {
+                    continue;
+                }
+
+                Logger.DebugFormat("keeping {0} warm...", printer.Key);
+                
+                try
+                {
+                    keepWarmPrinter.KeepWarm();
+                }
+                catch (Exception exc)
+                {
+                    Logger.WarnFormat("exception thrown while keeping {0} warm: {1}", printer.Key, exc);
+                }
+
+                Logger.DebugFormat("{0} kept warm", printer.Key);
+            }
+        }
+
+        protected virtual void KeepWarmPerform(object state)
+        {
+            try
+            {
+                KeepWarmActuallyPerform();
+            }
+            catch (Exception exc)
+            {
+                Logger.ErrorFormat("keeping warm failed: {0}", exc);
             }
         }
 
@@ -124,6 +163,22 @@ namespace PrinterHealth
             }
 
             _timer = new Timer(Perform, null, TimeSpan.Zero, TimeSpan.FromMinutes(config.UpdateIntervalMinutes));
+            _keepWarmTimer = null;
+            _keepWarmSpan = TimeSpan.FromMinutes(config.KeepWarmIntervalMinutes);
+        }
+
+        public void StartKeepingWarm()
+        {
+            if (_keepWarmTimer != null)
+            {
+                _keepWarmTimer = new Timer(KeepWarmPerform, null, TimeSpan.Zero, _keepWarmSpan);
+            }
+        }
+
+        public void StopKeepingWarm()
+        {
+            _keepWarmTimer.Dispose();
+            _keepWarmTimer = null;
         }
 
         #region disposal logic
@@ -144,6 +199,7 @@ namespace PrinterHealth
             {
                 // dispose managed objects
                 _timer.Dispose();
+                _keepWarmTimer?.Dispose();
             }
 
             // dispose unmanaged objects

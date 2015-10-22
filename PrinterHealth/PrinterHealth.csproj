@@ -55,6 +55,7 @@
     <Compile Include="Model\IMedium.cs" />
     <Compile Include="Model\IMonitoredMarker.cs" />
     <Compile Include="Model\IMonitoredMedium.cs" />
+    <Compile Include="Model\IPrinterToKeepWarm.cs" />
     <Compile Include="Model\IPrinterWithJobCleanup.cs" />
     <Compile Include="Model\IStatusInfo.cs" />
     <Compile Include="Model\IPrinter.cs" />
