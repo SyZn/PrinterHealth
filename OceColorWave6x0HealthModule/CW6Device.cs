@@ -244,6 +244,10 @@ namespace OceColorWave6x0HealthModule
 
             // submit it
             var uploadRequest = WebRequest.CreateHttp(GetUri(SubmitJobEndpoint));
+            if (!Config.VerifyHttpsCertificate)
+            {
+                uploadRequest.ServerCertificateValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+            }
             uploadRequest.Method = "POST";
             uploadRequest.ContentType = $"multipart/form-data; boundary={boundary}";
             uploadRequest.ContentLength = jobSubmissionBody.Length;
@@ -294,6 +298,10 @@ namespace OceColorWave6x0HealthModule
                 // found; delete job
                 var deleteBody = Encoding.ASCII.GetBytes(string.Format(CultureInfo.InvariantCulture, "jobTypes=queue&check={0}", warmJobID.Value));
                 var deleteRequest = WebRequest.CreateHttp(GetUri(DeleteJobEndpoint));
+                if (!Config.VerifyHttpsCertificate)
+                {
+                    uploadRequest.ServerCertificateValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+                }
                 deleteRequest.Method = "POST";
                 deleteRequest.ContentType = "application/x-www-form-urlencoded";
                 deleteRequest.ContentLength = deleteBody.Length;

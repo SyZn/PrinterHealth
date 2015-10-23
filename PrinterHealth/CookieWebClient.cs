@@ -25,7 +25,7 @@ namespace PrinterHealth
                 httpRequest.CookieContainer = CookieJar;
                 if (DontVerifyHttps)
                 {
-                    httpRequest.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                    httpRequest.ServerCertificateValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
                 }
             }
             return webRequest;

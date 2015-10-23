@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Net.Security;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using log4net;
 using log4net.Appender;
@@ -68,6 +70,14 @@ namespace PrinterHealth
 
                 rootLogger.AddAppender(fileLogAppender);
             }
+        }
+
+        /// <summary>
+        /// A certificate validation callback that validates nothing.
+        /// </summary>
+        public static bool NoCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors policyErrors)
+        {
+            return true;
         }
     }
 }
