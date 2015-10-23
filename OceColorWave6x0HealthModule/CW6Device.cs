@@ -300,7 +300,7 @@ namespace OceColorWave6x0HealthModule
                 var deleteRequest = WebRequest.CreateHttp(GetUri(DeleteJobEndpoint));
                 if (!Config.VerifyHttpsCertificate)
                 {
-                    uploadRequest.ServerCertificateValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+                    deleteRequest.ServerCertificateValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
                 }
                 deleteRequest.Method = "POST";
                 deleteRequest.ContentType = "application/x-www-form-urlencoded";
