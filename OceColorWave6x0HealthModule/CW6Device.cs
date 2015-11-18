@@ -295,7 +295,12 @@ namespace OceColorWave6x0HealthModule
                     continue;
                 }
 
-                // found; delete job
+                // found
+
+                // make sure the plotter started processing the job
+                Thread.Sleep(TimeSpan.FromSeconds(2));
+
+                // delete it
                 var deleteBody = Encoding.ASCII.GetBytes(string.Format(CultureInfo.InvariantCulture, "jobTypes=queue&check={0}", warmJobID.Value));
                 var deleteRequest = WebRequest.CreateHttp(GetUri(DeleteJobEndpoint));
                 if (!Config.VerifyHttpsCertificate)
