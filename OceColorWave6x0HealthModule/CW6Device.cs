@@ -246,7 +246,7 @@ namespace OceColorWave6x0HealthModule
             var uploadRequest = WebRequest.CreateHttp(GetUri(SubmitJobEndpoint));
             if (!Config.VerifyHttpsCertificate)
             {
-                uploadRequest.ServerCertificateValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+                uploadRequest.DisableCertificateVerification();
             }
             uploadRequest.Method = "POST";
             uploadRequest.ContentType = $"multipart/form-data; boundary={boundary}";
@@ -305,7 +305,7 @@ namespace OceColorWave6x0HealthModule
                 var deleteRequest = WebRequest.CreateHttp(GetUri(DeleteJobEndpoint));
                 if (!Config.VerifyHttpsCertificate)
                 {
-                    deleteRequest.ServerCertificateValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+                    deleteRequest.DisableCertificateVerification();
                 }
                 deleteRequest.Method = "POST";
                 deleteRequest.ContentType = "application/x-www-form-urlencoded";
