@@ -38,9 +38,12 @@
           {% if medium.is_measurable %}
           <div class="measure-box {{ medium.status_class | escape }}" title="{{ medium.percentage | escape }}%">
             <div class="measure-bar" style="height:{{ medium.percentage | escape }}%"></div>
+            <div class="measure-text">{{ medium.percentage | escape }}%</div>
           </div>
           {% else %}
-          <div class="status-box {{ medium.status_class | escape }}"></div>
+          <div class="status-box {{ medium.status_class | escape }}">
+            <div class="status-text">{{ medium.status_class | escape }}</div>
+          </div>
           {% endif %}
         </div>
         {% endfor %}
@@ -52,9 +55,12 @@
           {% if marker.is_measurable %}
           <div class="measure-box {{ marker.status_class | escape }}" title="{{ marker.percentage | escape }}%">
             <div class="measure-bar" style="height:{{ marker.percentage | escape }}%"></div>
+            <div class="measure-text">{{ marker.percentage | escape }}%</div>
           </div>
           {% else %}
-          <div class="status-box {{ medium.status_class | escape }}"></div>
+          <div class="status-box {{ marker.status_class | escape }}">
+            <div class="status-text">{{ marker.status_class | escape }}</div>
+          </div>
           {% endif %}
         </div>
         {% endfor %}
