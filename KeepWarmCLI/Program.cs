@@ -1,6 +1,7 @@
 ﻿using System;
 using log4net;
 using log4net.Appender;
+using log4net.Core;
 using log4net.Layout;
 using log4net.Repository.Hierarchy;
 using PrinterHealth;
@@ -24,6 +25,7 @@ namespace KeepWarmCLI
             conApp.ActivateOptions();
 
             var rootLogger = ((Hierarchy)LogManager.GetRepository()).Root;
+            rootLogger.Level = Level.Debug;
             rootLogger.AddAppender(conApp);
         }
 
