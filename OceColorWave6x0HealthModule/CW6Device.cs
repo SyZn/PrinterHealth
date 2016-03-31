@@ -243,6 +243,7 @@ namespace OceColorWave6x0HealthModule
             var jobSubmissionBody = jobSubmissionBodyString.ToBytesNaiveEncoding().ToArray();
 
             // submit it
+            Logger.DebugFormat("submitting keep-warm job to {0}", Config.Hostname);
             var uploadRequest = WebRequest.CreateHttp(GetUri(SubmitJobEndpoint));
             if (!Config.VerifyHttpsCertificate)
             {
@@ -289,7 +290,7 @@ namespace OceColorWave6x0HealthModule
                 if (!warmJobID.HasValue)
                 {
                     // sleep!
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                    Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforePollSeconds));
 
                     // again!
                     continue;
@@ -298,9 +299,10 @@ namespace OceColorWave6x0HealthModule
                 // found
 
                 // make sure the plotter started processing the job
-                Thread.Sleep(TimeSpan.FromSeconds(2));
+                Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforeDeleteSeconds));
 
                 // delete it
+                Logger.DebugFormat("deleting keep-warm job from {0}", Config.Hostname);
                 var deleteBody = Encoding.ASCII.GetBytes(string.Format(CultureInfo.InvariantCulture, "jobTypes=queue&check={0}", warmJobID.Value));
                 var deleteRequest = WebRequest.CreateHttp(GetUri(DeleteJobEndpoint));
                 if (!Config.VerifyHttpsCertificate)

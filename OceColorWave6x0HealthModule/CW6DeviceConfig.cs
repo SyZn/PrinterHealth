@@ -28,6 +28,17 @@ namespace OceColorWave6x0HealthModule
         public bool VerifyHttpsCertificate { get; set; }
 
         /// <summary>
+        /// How many seconds to wait between submitting a keep-warm job and polling whether it is already in the job
+        /// list.
+        /// </summary>
+        public int KeepWarmWaitBeforePollSeconds { get; set; }
+
+        /// <summary>
+        /// How many seconds to wait between finding a keep-warm job in the job list and deleting it.
+        /// </summary>
+        public int KeepWarmWaitBeforeDeleteSeconds { get; set; }
+
+        /// <summary>
         /// Mapping from full to short media type names.
         /// </summary>
         public Dictionary<string, string> ShortMediaTypeNames { get; set; }
@@ -37,6 +48,8 @@ namespace OceColorWave6x0HealthModule
         public CW6DeviceConfig(JObject obj)
         {
             TimeoutSeconds = 10;
+            KeepWarmWaitBeforePollSeconds = 5;
+            KeepWarmWaitBeforeDeleteSeconds = 2;
             ShortMediaTypeNames = new Dictionary<string, string>();
             MediaTypeNormalization = new Dictionary<string, string>();
 
