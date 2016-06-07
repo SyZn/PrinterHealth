@@ -64,11 +64,16 @@ namespace PrinterHealth
                 };
                 layout.ActivateOptions();
 
-                var fileLogAppender = new FileAppender
+                var fileLogAppender = new RollingFileAppender
                 {
                     Layout = layout,
                     File = Path.Combine(ProgramDirectory, "Log.txt"),
-                    AppendToFile = true
+                    AppendToFile = true,
+                    RollingStyle = RollingFileAppender.RollingMode.Date,
+                    DatePattern = ".yyyy-MM-dd",
+                    StaticLogFileName = true,
+                    PreserveLogFileNameExtension = true,
+                    Encoding = Utf8NoBom,
                 };
                 fileLogAppender.ActivateOptions();
 
