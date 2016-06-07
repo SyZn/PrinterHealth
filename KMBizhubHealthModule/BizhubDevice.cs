@@ -311,7 +311,8 @@ namespace KMBizhubHealthModule
                     if (state == "NearLifeEnd" || state == "NearEmpty")
                     {
                         isEmpty = false;
-                        isLow = true;
+                        // KM printers warn far too early
+                        isLow = (percent >= 0.0f && percent < 10.0f);
                     }
                     else if (state == "Empty")
                     {
