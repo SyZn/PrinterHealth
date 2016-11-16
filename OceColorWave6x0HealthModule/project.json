@@ -1,0 +1,26 @@
+{
+  "name": "OceColorWave6x0HealthModule",
+  "version": "0.0.7-*",
+  "buildOptions": {
+    "debugType": "portable"
+  },
+  "dependencies": {
+    "PrinterHealth": {
+      "target": "project"
+    }
+  },
+  "frameworks": {
+    "netstandard1.3": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.1",
+        "System.Threading.Thread": "4.3.0",
+        "System.Xml.XDocument": "4.3.0"
+      }
+    },
+    "net46": {
+      "frameworkAssemblies": {
+        "System.Xml.Linq": ""
+      }
+    }
+  }
+}

@@ -1,42 +1,18 @@
 ﻿using System;
-using log4net;
-using log4net.Appender;
-using log4net.Core;
-using log4net.Layout;
-using log4net.Repository.Hierarchy;
 using PrinterHealth;
+using RavuAlHemio.CentralizedLog;
 
 namespace KeepWarmCLI
 {
     class Program
     {
-        private static void SetupConsoleLogging()
-        {
-            var layout = new PatternLayout
-            {
-                ConversionPattern = "%date{yyyy-MM-dd HH:mm:ss} [%15.15thread] %-5level %30.30logger - %message%newline"
-            };
-            layout.ActivateOptions();
-
-            var conApp = new ConsoleAppender
-            {
-                Layout = layout
-            };
-            conApp.ActivateOptions();
-
-            var rootLogger = ((Hierarchy)LogManager.GetRepository()).Root;
-            rootLogger.Level = Level.Debug;
-            rootLogger.AddAppender(conApp);
-        }
-
         static void Main(string[] args)
         {
+            // setup logging
+            CentralizedLogger.SetupConsoleLogging();
+
             // load config
             var config = PrinterHealthUtils.LoadConfig();
-
-            // setup logging
-            PrinterHealthUtils.SetupLogging();
-            SetupConsoleLogging();
 
             // start the health monitor
             var healthMonitor = new HealthMonitor(config);

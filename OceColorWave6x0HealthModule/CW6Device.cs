@@ -4,26 +4,29 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using log4net;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PrinterHealth;
 using PrinterHealth.Model;
+using RavuAlHemio.CentralizedLog;
 
 namespace OceColorWave6x0HealthModule
 {
     public class CW6Device : IPrinterToKeepWarm
     {
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger Logger = CentralizedLogger.Factory.CreateLogger<CW6Device>();
 
         private readonly object _lock = new object();
 
         protected readonly CW6DeviceConfig Config;
-        protected readonly CookieWebClient Client;
+        protected readonly HttpClient Client;
 
         protected List<CW6Toner> CWMarkers;
         protected List<CW6Paper> CWMedia;
@@ -120,7 +123,7 @@ namespace OceColorWave6x0HealthModule
                 case "/SystemMonitor/images/statusWarning.gif":
                     return StatusLevel.HardWarning;
                 default:
-                    Logger.WarnFormat("Unknown status image '{0}'", image);
+                    Logger.LogWarning("Unknown status image '{StatusImagePath}'", image);
                     return StatusLevel.Info;
             }
         }
@@ -153,7 +156,7 @@ namespace OceColorWave6x0HealthModule
         /// <param name="endpoint">The endpoint for which to return the XML document.</param>
         protected virtual T FetchJson<T>(string endpoint)
         {
-            var docString = Client.DownloadString(GetUri(endpoint));
+            string docString = Client.GetStringAsync(GetUri(endpoint)).SyncWait();
             return JsonConvert.DeserializeObject<T>(docString);
         }
 
@@ -207,59 +210,38 @@ namespace OceColorWave6x0HealthModule
 
         public void KeepWarm()
         {
-            // find a nice boundary
-            const string boundaryPrefix = "----PrinterHealthFormBoundary";
-            const int boundarySuffixLength = 16;
-            var boundaryGenerator = new Random();
-            var boundary = new StringBuilder(boundaryPrefix);
-            for (int i = 0; i < boundarySuffixLength; ++i)
-            {
-                // A-Z + a-z + 0-9
-                int num = boundaryGenerator.Next(62);
-                char b;
-                if (num < 26)
-                {
-                    b = (char) ('A' + num);
-                }
-                else if (num < 52)
-                {
-                    b = (char) ('a' + num - 26);
-                }
-                else
-                {
-                    Debug.Assert(num < 62);
-                    b = (char) ('0' + num - 52);
-                }
-                boundary.Append(b);
-            }
-
-            // prepare the empty job
-            var jobSubmissionBodyString = string.Format(
-                CultureInfo.InvariantCulture,
-                CW6Data.KeepWarmJobUpload,
-                boundary.ToString(),
-                CW6Data.KeepWarmJob
-            );
-            var jobSubmissionBody = jobSubmissionBodyString.ToBytesNaiveEncoding().ToArray();
-
-            // submit it
-            Logger.DebugFormat("submitting keep-warm job to {0}", Config.Hostname);
-            var uploadRequest = WebRequest.CreateHttp(GetUri(SubmitJobEndpoint));
-            if (!Config.VerifyHttpsCertificate)
-            {
-                uploadRequest.DisableCertificateVerification();
-            }
-            uploadRequest.Method = "POST";
-            uploadRequest.ContentType = $"multipart/form-data; boundary={boundary}";
-            uploadRequest.ContentLength = jobSubmissionBody.Length;
-            using (var requestStream = uploadRequest.GetRequestStream())
-            {
-                requestStream.Write(jobSubmissionBody, 0, jobSubmissionBody.Length);
-                requestStream.Close();
-            }
-            using (uploadRequest.GetResponse())
-            {
-            }
+            // submit the empty job
+            Logger.LogDebug("submitting keep-warm job to {Hostname}", Config.Hostname);
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, GetUri(SubmitJobEndpoint));
+            var content = new MultipartFormDataContent();
+            AddFormData(content, "measurementUnit", "METRIC");
+            AddFormData(content, "medium_auto", "anyMediaType");
+            AddFormData(content, "medium_no_zoom", "anyMediaType");
+            AddFormData(content, "scale", "NO_ZOOM");
+            AddFormData(content, "flip_image", "flip_image_no");
+            AddFormData(content, "orientation", "AUTO");
+            AddFormData(content, "printmode", "auto");
+            AddFormData(content, "colourmode", "COLOUR");
+            AddFormData(content, "alignment", "TOP_RIGHT");
+            AddFormData(content, "horizontalShift", "0");
+            AddFormData(content, "verticalShift", "0");
+            AddFormData(content, "cutsize", "SYNCHRO");
+            AddFormData(content, "addLeadingStrip", "0");
+            AddFormData(content, "addTrailingStrip", "0");
+            AddFormData(content, "sheetDelivery", "TDT");
+            AddFormData(content, "jobId", "");
+            AddFormData(content, "docboxName", "Public");
+            AddFormData(content, "directPrint", "directPrint");
+            AddFormData(content, "hidden_directPrint", "true");
+            AddFormData(content, "userName", "PRINTERHEALTH");
+            AddFormData(content, "nrOfCopies", "1");
+            AddFormData(content, "collate", "on");
+            AddFormData(content, "uploadedFilenames", "KEEPWARM");
+            AddFormData(content, "jobnameInput", "KEEPWARM");
+            AddFormData(content, "uploadedFileIds", "file_0");
+            AddOctetStreamFileData(content, "file_0", "KEEPWARM", CW6Data.KeepWarmJob.ToBytesNaiveEncoding().ToArray());
+            httpRequest.Content = content;
+            Client.SendAsync(httpRequest).SyncWait();
 
             // poll until the job appears
             long? warmJobID = null;
@@ -302,24 +284,14 @@ namespace OceColorWave6x0HealthModule
                 Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforeDeleteSeconds));
 
                 // delete it
-                Logger.DebugFormat("deleting keep-warm job from {0}", Config.Hostname);
-                var deleteBody = Encoding.ASCII.GetBytes(string.Format(CultureInfo.InvariantCulture, "jobTypes=queue&check={0}", warmJobID.Value));
-                var deleteRequest = WebRequest.CreateHttp(GetUri(DeleteJobEndpoint));
-                if (!Config.VerifyHttpsCertificate)
+                Logger.LogDebug("deleting keep-warm job from {Hostname}", Config.Hostname);
+                var deleteRequest = new HttpRequestMessage(HttpMethod.Post, GetUri(DeleteJobEndpoint));
+                deleteRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string>
                 {
-                    deleteRequest.DisableCertificateVerification();
-                }
-                deleteRequest.Method = "POST";
-                deleteRequest.ContentType = "application/x-www-form-urlencoded";
-                deleteRequest.ContentLength = deleteBody.Length;
-                using (var requestStream = deleteRequest.GetRequestStream())
-                {
-                    requestStream.Write(deleteBody, 0, deleteBody.Length);
-                    requestStream.Close();
-                }
-                using (deleteRequest.GetResponse())
-                {
-                }
+                    ["jobTypes"] = "queue",
+                    ["check"] = warmJobID.Value.ToString(CultureInfo.InvariantCulture)
+                });
+                Client.SendAsync(deleteRequest).SyncWait();
 
                 // done
                 break;
@@ -329,13 +301,45 @@ namespace OceColorWave6x0HealthModule
         public CW6Device(JObject jo)
         {
             Config = new CW6DeviceConfig(jo);
-            Client = new CookieWebClient {TimeoutSeconds = Config.TimeoutSeconds, DontVerifyHttps = !Config.VerifyHttpsCertificate};
-            Client.Headers.Add(HttpRequestHeader.AcceptLanguage, "en");
+
+            var clientHandler = new HttpClientHandler();
+            if (!Config.VerifyHttpsCertificate)
+            {
+                clientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+            }
+            Client = new HttpClient(clientHandler)
+            {
+                Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
+            };
+
+            Client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en");
             CWMarkers = new List<CW6Toner>();
             CWMedia = new List<CW6Paper>();
             CWStatusMessages = new List<CW6Status>();
             CWLastUpdated = null;
             CWJobCount = 0;
+        }
+
+        static void AddFormData(MultipartFormDataContent mfdc, string name, string value)
+        {
+            var innerContent = new StringContent(value, PrinterHealthUtils.Utf8NoBom);
+            innerContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+            {
+                Name = name
+            };
+            mfdc.Add(innerContent);
+        }
+
+        static void AddOctetStreamFileData(MultipartFormDataContent mfdc, string fieldName, string fileName, byte[] content)
+        {
+            var innerContent = new ByteArrayContent(content);
+            innerContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+            {
+                Name = fieldName,
+                FileName = fileName
+            };
+            innerContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            mfdc.Add(innerContent);
         }
     }
 }

@@ -1,0 +1,26 @@
+{
+  "name": "PrinterHealthWebCLI",
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable",
+    "emitEntryPoint": true
+  },
+  "dependencies": {
+    "PrinterHealthWeb": {
+      "target": "project"
+    },
+    "RavuAlHemio.CentralizedLog": "0.0.1"
+  },
+  "frameworks": {
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.0.1"
+        }
+      },
+      "imports": "dnxcore50"
+    },
+    "net46": {}
+  }
+}

@@ -1,36 +1,25 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Net.Security;
-using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using log4net;
-using log4net.Appender;
-using log4net.Config;
-using log4net.Core;
-using log4net.Layout;
-using log4net.Repository.Hierarchy;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using PrinterHealth.Config;
+using RavuAlHemio.CentralizedLog;
 
 namespace PrinterHealth
 {
     public static class PrinterHealthUtils
     {
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger Logger = CentralizedLogger.Factory.CreateLogger(typeof(PrinterHealthUtils));
 
         public static Encoding Utf8NoBom = new UTF8Encoding(false, true);
 
-        public static string ProgramDirectory
-        {
-            get
-            {
-                var localPath = (new Uri(Assembly.GetExecutingAssembly().CodeBase)).LocalPath;
-                return Path.GetDirectoryName(localPath);
-            }
-        }
+        public static string ProgramDirectory => AppContext.BaseDirectory;
 
         public static PrinterHealthConfig LoadConfig()
         {
@@ -42,68 +31,31 @@ namespace PrinterHealth
         }
 
         /// <summary>
-        /// Sets up logging from a configuration file or chooses some sane defaults.
-        /// </summary>
-        public static void SetupLogging()
-        {
-            var confFile = new FileInfo(Path.Combine(ProgramDirectory, "Logging.conf"));
-            if (confFile.Exists)
-            {
-                XmlConfigurator.Configure(confFile);
-            }
-            else
-            {
-                var rootLogger = ((Hierarchy)LogManager.GetRepository()).Root;
-                rootLogger.Level = Level.Debug;
-                LogManager.GetRepository().Configured = true;
-
-                // log to a file
-                var layout = new PatternLayout
-                {
-                    ConversionPattern = "%date{yyyy-MM-dd HH:mm:ss} [%15.15thread] %-5level %30.30logger - %message%newline"
-                };
-                layout.ActivateOptions();
-
-                var fileLogAppender = new RollingFileAppender
-                {
-                    Layout = layout,
-                    File = Path.Combine(ProgramDirectory, "Log.txt"),
-                    AppendToFile = true,
-                    RollingStyle = RollingFileAppender.RollingMode.Date,
-                    DatePattern = ".yyyy-MM-dd",
-                    StaticLogFileName = true,
-                    PreserveLogFileNameExtension = true,
-                    Encoding = Utf8NoBom,
-                };
-                fileLogAppender.ActivateOptions();
-
-                rootLogger.AddAppender(fileLogAppender);
-            }
-        }
-
-        /// <summary>
         /// A certificate validation callback that validates nothing.
         /// </summary>
-        public static bool NoCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors policyErrors)
+        public static bool NoCertificateValidationCallback(HttpRequestMessage request, X509Certificate2 certificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             return true;
         }
 
-        public static void DisableCertificateVerification(this HttpWebRequest request)
+        public static HttpClientHandler WithoutCertificateVerification(this HttpClientHandler handler)
         {
-            var type = request.GetType();
-            var property = type.GetProperties().FirstOrDefault(p => p.Name == "ServerCertificateValidationCallback");
-            if (property != null)
+            handler.ServerCertificateCustomValidationCallback = NoCertificateValidationCallback;
+            return handler;
+        }
+
+        public static T SyncWait<T>(this Task<T> task, int millisecondsTimeout = Timeout.Infinite, CancellationToken cancelToken = default(CancellationToken))
+        {
+            task.Wait(millisecondsTimeout, cancelToken);
+            if (task.IsFaulted)
             {
-                // good; set the property
-                property.SetValue(request, (RemoteCertificateValidationCallback)NoCertificateValidationCallback);
+                throw task.Exception;
             }
-            else
+            if (task.IsCanceled)
             {
-                // bad; set globally
-                Logger.Warn("globally disabling certificate validation!");
-                ServicePointManager.ServerCertificateValidationCallback = NoCertificateValidationCallback;
+                throw new TaskCanceledException();
             }
+            return task.Result;
         }
     }
 }

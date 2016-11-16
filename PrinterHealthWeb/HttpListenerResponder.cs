@@ -4,21 +4,24 @@ using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading;
+using System.Threading.Tasks;
 using DotLiquid;
-using log4net;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.Logging;
 using PrinterHealth;
 using PrinterHealth.Config;
 using PrinterHealth.Model;
+using RavuAlHemio.CentralizedLog;
 
 namespace PrinterHealthWeb
 {
     public class HttpListenerResponder
     {
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger Logger = CentralizedLogger.Factory.CreateLogger<HttpListenerResponder>();
 
         protected static readonly Regex AllowedStaticFilenameFormat = new Regex("^[a-zA-Z0-9-_]+[.][a-zA-Z0-9]+$");
         protected static readonly Dictionary<string, string> ExtensionsToMimeTypes = new Dictionary<string, string>
@@ -30,8 +33,7 @@ namespace PrinterHealthWeb
             {"jpeg", "image/jpeg"},
         };
 
-        protected HttpListener Listener;
-        private Thread _handlerThread;
+        protected IWebHost WebHost;
         private readonly PrinterHealthConfig _config;
         private readonly HealthMonitor _monitor;
 
@@ -39,41 +41,49 @@ namespace PrinterHealthWeb
         {
             _config = config;
             _monitor = monitor;
-            Listener = new HttpListener();
-            Listener.Prefixes.Add(string.Format("http://+:{0}/", config.ListenPort));
+            WebHost = new WebHostBuilder()
+                .UseKestrel()
+                .UseUrls($"http://+:{config.ListenPort}/")
+                .Configure(app =>
+                {
+                    app.Use(async (ctx, next) =>
+                    {
+                        await Task.Run(() => HandleRequest(ctx));
+                        await next();
+                    });
+                })
+                .Build();
         }
 
-        protected static void SendPlainTextResponse(HttpListenerResponse resp, int statusCode, string statusDescription, string body)
+        protected static void SendPlainTextResponse(HttpResponse resp, int statusCode, string body)
         {
             resp.StatusCode = statusCode;
-            resp.StatusDescription = statusDescription;
-            resp.Headers[HttpResponseHeader.ContentType] = "text/plain; charset=utf-8";
+            resp.ContentType = "text/plain; charset=utf-8";
 
             var bodyBytes = PrinterHealthUtils.Utf8NoBom.GetBytes(body);
-            resp.ContentLength64 = bodyBytes.Length;
-            resp.Close(bodyBytes, true);
+            resp.ContentLength = bodyBytes.Length;
+            resp.Body.Write(bodyBytes, 0, bodyBytes.Length);
         }
 
-        protected static void Send404Response(HttpListenerResponse resp)
+        protected static void Send404Response(HttpResponse resp)
         {
-            SendPlainTextResponse(resp, 404, "Not Found", "The requested file was not found.");
+            SendPlainTextResponse(resp, 404, "The requested file was not found.");
         }
 
-        protected static void Send405Response(HttpListenerResponse resp, params string[] allowedMethods)
+        protected static void Send405Response(HttpResponse resp, params string[] allowedMethods)
         {
             var allowedMethodsString = string.Join(", ", allowedMethods);
-            resp.Headers[HttpResponseHeader.Allow] = allowedMethodsString;
-            SendPlainTextResponse(resp, 405, "Method Not Allowed", "I can only be accessed using: " + allowedMethodsString);
+            resp.Headers["Allow"] = allowedMethodsString;
+            SendPlainTextResponse(resp, 405, "I can only be accessed using: " + allowedMethodsString);
         }
 
-        protected static void SendOkResponse(HttpListenerResponse resp, string mimeType, byte[] body)
+        protected static void SendOkResponse(HttpResponse resp, string mimeType, byte[] body)
         {
             resp.StatusCode = 200;
-            resp.StatusDescription = "OK";
-            resp.Headers[HttpResponseHeader.ContentType] = mimeType;
+            resp.ContentType = mimeType;
 
-            resp.ContentLength64 = body.Length;
-            resp.Close(body, true);
+            resp.ContentLength = body.Length;
+            resp.Body.Write(body, 0, body.Length);
         }
 
         [Pure]
@@ -82,10 +92,10 @@ namespace PrinterHealthWeb
             return ExtensionsToMimeTypes.ContainsKey(extension) ? ExtensionsToMimeTypes[extension] : "application/octet-stream";
         }
 
-        protected virtual void HandleRequest(HttpListenerContext ctx)
+        protected virtual void HandleRequest(HttpContext ctx)
         {
-            var method = ctx.Request.HttpMethod;
-            var path = ctx.Request.Url.AbsolutePath;
+            var method = ctx.Request.Method;
+            var path = ctx.Request.GetEncodedUrl();
 
             if (path == "/")
             {
@@ -240,52 +250,14 @@ namespace PrinterHealthWeb
             }
         }
 
-        protected virtual void Proc()
-        {
-            for (;;)
-            {
-                try
-                {
-                    var context = Listener.GetContext();
-                    ThreadPool.QueueUserWorkItem(ctxObj =>
-                    {
-                        var ctx = (HttpListenerContext) ctxObj;
-                        using (ctx.Response)
-                        {
-                            try
-                            {
-                                HandleRequest(ctx);
-                            }
-                            catch (Exception exc)
-                            {
-                                Logger.Error("handling HTTP request failed", exc);
-                            }
-                        }
-                    }, context);
-                }
-                catch (Exception exc)
-                {
-                    if (!Listener.IsListening)
-                    {
-                        // listener stopped; I should stop too
-                        return;
-                    }
-                    Logger.Error("HTTP listening handling broke", exc);
-                }
-            }
-        }
-
         public void Start()
         {
-            Listener.Start();
-            _handlerThread = new Thread(Proc) {Name = "HTTP handler", IsBackground = true};
-            _handlerThread.Start();
+            WebHost.Start();
         }
 
         public void Stop()
         {
-            Listener.Stop();
-            _handlerThread.Join();
+            WebHost.Dispose();
         }
     }
 }

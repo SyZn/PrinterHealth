@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Collections.Generic;
+using System.Xml.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace KMBizhubHealthModule
 {
@@ -12,16 +14,6 @@ namespace KMBizhubHealthModule
         {
         }
 
-        public override string ErrorJobsXPath
-        {
-            get { return "/MFP/JobList/Print/Job[JobStatus/Status='ErrorPrinting']"; }
-        }
-
-        public override string AllJobsXPath
-        {
-            get { return "/MFP/JobList/Print/Job"; }
-        }
-
         public override string ActiveJobsEndpoint
         {
             get { return "/wcd/job.xml"; }
@@ -30,6 +22,16 @@ namespace KMBizhubHealthModule
         public override string ConsumablesStatusEndpoint
         {
             get { return "/wcd/system.xml"; }
+        }
+
+        protected override IEnumerable<XElement> AllJobs(XDocument doc)
+        {
+            return doc
+                .Element("MFP")
+                .Element("JobList")
+                .Element("Print")
+                .Elements("Job")
+            ;
         }
     }
 }

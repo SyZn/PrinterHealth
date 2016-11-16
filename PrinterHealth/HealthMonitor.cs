@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
-using log4net;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using PrinterHealth.Config;
 using PrinterHealth.Model;
+using RavuAlHemio.CentralizedLog;
 
 namespace PrinterHealth
 {
     public class HealthMonitor : IDisposable
     {
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger Logger = CentralizedLogger.Factory.CreateLogger<HealthMonitor>();
 
         private bool _disposed = false;
         private readonly object _interlock = new object();
@@ -29,7 +30,7 @@ namespace PrinterHealth
         {
             foreach (var printer in _printers)
             {
-                Logger.DebugFormat("updating {0}...", printer.Key);
+                Logger.LogDebug("updating {PrinterName}...", printer.Key);
 
                 try
                 {
@@ -43,10 +44,10 @@ namespace PrinterHealth
                 }
                 catch (Exception exc)
                 {
-                    Logger.WarnFormat("exception thrown while updating/cleaning {0}: {1}", printer.Key, exc);
+                    Logger.LogWarning("exception thrown while updating/cleaning {PrinterName}: {Exception}", printer.Key, exc);
                 }
 
-                Logger.DebugFormat("{0} updated", printer.Key);
+                Logger.LogDebug("{PrinterName} updated", printer.Key);
             }
         }
 
@@ -60,7 +61,7 @@ namespace PrinterHealth
                     continue;
                 }
 
-                Logger.DebugFormat("keeping {0} warm...", printer.Key);
+                Logger.LogDebug("keeping {PrinterName} warm...", printer.Key);
                 
                 try
                 {
@@ -68,10 +69,10 @@ namespace PrinterHealth
                 }
                 catch (Exception exc)
                 {
-                    Logger.WarnFormat("exception thrown while keeping {0} warm: {1}", printer.Key, exc);
+                    Logger.LogWarning("exception thrown while keeping {PrinterName} warm: {Exception}", printer.Key, exc);
                 }
 
-                Logger.DebugFormat("{0} kept warm", printer.Key);
+                Logger.LogDebug("{PrinterName} kept warm", printer.Key);
             }
         }
 
@@ -83,7 +84,7 @@ namespace PrinterHealth
             }
             catch (Exception exc)
             {
-                Logger.ErrorFormat("keeping warm failed: {0}", exc);
+                Logger.LogError("keeping warm failed: {Exception}", exc);
             }
         }
 
@@ -100,7 +101,7 @@ namespace PrinterHealth
             }
             catch (Exception exc)
             {
-                Logger.ErrorFormat("health monitoring failed: {0}", exc);
+                Logger.LogError("health monitoring failed: {Exception}", exc);
             }
             finally
             {
@@ -117,20 +118,20 @@ namespace PrinterHealth
             {
                 if (_printers.ContainsKey(printer.Name))
                 {
-                    Logger.ErrorFormat(
-                        "duplicate printer name {0}",
+                    Logger.LogError(
+                        "duplicate printer name {PrinterName}",
                         printer.Name
                     );
                     continue;
                 }
 
-                var assembly = Assembly.Load(printer.Assembly);
+                var assembly = Assembly.Load(new AssemblyName(printer.Assembly));
                 if (assembly == null)
                 {
-                    Logger.ErrorFormat(
-                        "assembly {1} (for class {0}) could not be loaded",
-                        printer.DeviceClass,
-                        printer.Assembly
+                    Logger.LogError(
+                        "assembly {Assembly} (for class {DeviceClass}) could not be loaded",
+                        printer.Assembly,
+                        printer.DeviceClass
                     );
                     continue;
                 }
@@ -138,8 +139,8 @@ namespace PrinterHealth
                 var type = assembly.GetType(printer.DeviceClass);
                 if (type == null)
                 {
-                    Logger.ErrorFormat(
-                        "class {0} not found in assembly {1}",
+                    Logger.LogError(
+                        "class {DeviceClass} not found in assembly {Assembly}",
                         printer.DeviceClass,
                         printer.Assembly
                     );
@@ -149,8 +150,8 @@ namespace PrinterHealth
                 var constructor = type.GetConstructor(new [] {typeof(JObject)});
                 if (constructor == null)
                 {
-                    Logger.ErrorFormat(
-                        "constructor with JObject parameter not found in class {0} in assembly {1}",
+                    Logger.LogError(
+                        "constructor with JObject parameter not found in class {DeviceClass} in assembly {Assembly}",
                         printer.DeviceClass,
                         printer.Assembly
                     );

@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading;
-using System.Xml;
-using log4net;
+using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using PrinterHealth;
 using PrinterHealth.Model;
+using RavuAlHemio.CentralizedLog;
 
 namespace KMBizhubHealthModule
 {
@@ -18,7 +21,7 @@ namespace KMBizhubHealthModule
     /// </summary>
     public abstract class BizhubDevice : IPrinterWithJobCleanup
     {
-        private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger Logger = CentralizedLogger.Factory.CreateLogger<BizhubDevice>();
 
         private readonly object _lock = new object();
 
@@ -62,9 +65,14 @@ namespace KMBizhubHealthModule
         protected readonly BizhubDeviceConfig Config;
 
         /// <summary>
+        /// The container full of cookies.
+        /// </summary>
+        protected readonly CookieContainer CookieJar;
+
+        /// <summary>
         /// The web client.
         /// </summary>
-        protected readonly CookieWebClient Client;
+        protected readonly HttpClient Client;
 
         /// <summary>
         /// Initialize a KMBizhubDevice with the given parameters.
@@ -73,23 +81,28 @@ namespace KMBizhubHealthModule
         protected BizhubDevice(JObject parameters)
         {
             Config = new BizhubDeviceConfig(parameters);
-            Client = new CookieWebClient { IgnoreCookiePaths = true, DontVerifyHttps = !Config.VerifyHttpsCertificate, TimeoutSeconds = Config.TimeoutSeconds };
+            CookieJar = new CookieContainer();
+
+            var clientHandler = new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+                CookieContainer = CookieJar
+            };
+            if (!Config.VerifyHttpsCertificate)
+            {
+                clientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+            }
+            Client = new HttpClient(clientHandler)
+            {
+                Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
+            };
+
             BizhubMarkers = new List<BizhubToner>();
             BizhubMedia = new List<BizhubPaper>();
             BizhubJobCount = 0;
             BizhubStatus = new List<BizhubStatus>();
             BizhubLastUpdated = null;
         }
-
-        /// <summary>
-        /// XPath string to fetch all jobs that have an error.
-        /// </summary>
-        public abstract string ErrorJobsXPath { get; }
-
-        /// <summary>
-        /// XPath string to fetch the list of current jobs.
-        /// </summary>
-        public abstract string AllJobsXPath { get; }
 
         /// <summary>
         /// The endpoint at which to receive active (including failed) jobs.
@@ -101,6 +114,22 @@ namespace KMBizhubHealthModule
         /// markers).
         /// </summary>
         public abstract string ConsumablesStatusEndpoint { get; }
+
+        /// <summary>
+        /// Fetches the list of current jobs.
+        /// </summary>
+        protected abstract IEnumerable<XElement> AllJobs(XDocument doc);
+
+        /// <summary>
+        /// Fetches the list of all jobs that have an error.
+        /// </summary>
+        protected virtual IEnumerable<XElement> ErrorJobs(XDocument doc)
+        {
+            return
+                AllJobs(doc)
+                .Where(j => j.Element("JobStatus").Element("Status").Value == "ErrorPrinting")
+            ;
+        }
 
         /// <summary>
         /// Returns the URI for a specific endpoint on the printer.
@@ -121,12 +150,12 @@ namespace KMBizhubHealthModule
         /// Fetches an XML document from the printer.
         /// </summary>
         /// <param name="endpoint">The endpoint for which to return the XML document.</param>
-        protected virtual XmlDocument FetchXml(string endpoint)
+        protected virtual XDocument FetchXml(string endpoint)
         {
-            var docString = Client.DownloadString(GetUri(endpoint));
-            var doc = new XmlDocument();
-            doc.LoadXml(docString);
-            return doc;
+            using (Stream stream = Client.GetStreamAsync(GetUri(endpoint)).SyncWait())
+            {
+                return XDocument.Load(stream);
+            }
         }
 
         protected ICollection<string> GetFailedJobIDs()
@@ -134,12 +163,11 @@ namespace KMBizhubHealthModule
             var ret = new List<string>();
 
             // check status
-            var statusDoc = FetchXml(CommonStatusEndpoint);
-            var statusElement = statusDoc.SelectSingleNode("/MFP/DeviceStatus");
+            XDocument statusDoc = FetchXml(CommonStatusEndpoint);
+            XElement statusElement = statusDoc.Element("MFP")?.Element("DeviceStatus");
             if (statusElement != null)
             {
-                var printerStatusNode = statusElement.SelectSingleNode("./PrintStatus/text()");
-                var printerStatus = printerStatusNode == null ? "unknown" : printerStatusNode.Value;
+                string printerStatus = statusElement.Element("PrintStatus")?.Value ?? "unknown";
 
                 if (NonErrorCodes.Contains(printerStatus))
                 {
@@ -147,22 +175,21 @@ namespace KMBizhubHealthModule
                 }
             }
 
-            var doc = FetchXml(ActiveJobsEndpoint);
-            var jobElements = doc.SelectNodes(ErrorJobsXPath);
+            XDocument doc = FetchXml(ActiveJobsEndpoint);
+            IEnumerable<XElement> jobElements = ErrorJobs(doc);
             if (jobElements == null)
             {
                 return ret.ToArray();
             }
 
-            foreach (XmlElement jobElement in jobElements)
+            foreach (XElement jobElement in jobElements)
             {
-                var jobIDNode = jobElement.SelectSingleNode("./JobID/text()");
-                if (jobIDNode == null)
+                var jobID = jobElement.Element("JobID")?.Value;
+                if (jobID == null)
                 {
                     continue;
                 }
 
-                var jobID = jobIDNode.Value;
                 ret.Add(jobID);
             }
 
@@ -171,19 +198,15 @@ namespace KMBizhubHealthModule
 
         protected void DeleteJob(string jobID)
         {
-            Logger.InfoFormat("{0}: deleting failed job {1}", this, jobID);
+            Logger.LogInformation("{Device}: deleting failed job {JobID}", this, jobID);
 
-            var values = new NameValueCollection
+            var values = new Dictionary<string, string>
             {
                 {"func", "PSL_J_DEL"},
                 {"H_JID", jobID}
             };
 
-            Client.UploadValues(
-                GetUri(DeleteJobEndpoint),
-                "POST",
-                values
-            );
+            Client.PostAsync(GetUri(DeleteJobEndpoint), new FormUrlEncodedContent(values)).SyncWait();
         }
 
         public override string ToString()
@@ -193,12 +216,15 @@ namespace KMBizhubHealthModule
 
         protected void AddCookie(string cookieName, string cookieValue)
         {
-            Client.CookieJar.Add(new Cookie(
-                cookieName,
-                cookieValue,
-                "/",
-                Config.Hostname
-            ));
+            CookieJar.Add(
+                GetUri(""),
+                new Cookie(
+                    cookieName,
+                    cookieValue,
+                    "/",
+                    Config.Hostname
+                )
+            );
         }
 
         protected virtual void Login()
@@ -208,21 +234,17 @@ namespace KMBizhubHealthModule
 
             if (Config.PerformLogin)
             {
-                var values = new NameValueCollection
+                var values = new Dictionary<string, string>
                 {
                     {"func", "PSL_LP0_TOP"},
                     {"R_ADM", "Admin"},
                     {"password", Config.AdminPassword}
                 };
-                Client.UploadValues(
-                    GetUri(LoginEndpoint),
-                    "POST",
-                    values
-                );
+                Client.PostAsync(GetUri(LoginEndpoint), new FormUrlEncodedContent(values)).SyncWait();
             }
             else
             {
-                Client.DownloadData(GetUri(NoLoginEndpoint));
+                Client.GetAsync(GetUri(NoLoginEndpoint)).SyncWait();
             }
         }
 
@@ -289,23 +311,28 @@ namespace KMBizhubHealthModule
             Login();
 
             // get the status page
-            var consumeStatusDoc = FetchXml(ConsumablesStatusEndpoint);
+            XDocument consumeStatusDoc = FetchXml(ConsumablesStatusEndpoint);
 
             // fetch the toner info
             var newMarkers = new List<BizhubToner>();
-            var tonerElements = consumeStatusDoc.SelectNodes("/MFP/DeviceInfo/ConsumableList/Consumable[./Type = 'Toner']");
+            IEnumerable<XElement> tonerElements = consumeStatusDoc
+                .Element("MFP")
+                ?.Element("DeviceInfo")
+                ?.Element("ConsumableList")
+                ?.Elements("Consumable")
+                ?.Where(c => c.Element("Type").Value == "Toner")
+            ;
+
             if (tonerElements != null)
             {
-                foreach (XmlNode tonerElement in tonerElements)
+                foreach (XElement tonerElement in tonerElements)
                 {
-                    var colorNode = tonerElement.SelectSingleNode("./Color/text()");
-                    var color = (colorNode != null) ? colorNode.Value : "?";
+                    string color = tonerElement.Element("Color")?.Value ?? "?";
 
-                    var percentNode = tonerElement.SelectSingleNode("./CurrentLevel/LevelPer/text()");
-                    var percent = (percentNode != null) ? float.Parse(percentNode.Value) : -1.0f;
+                    string percentString = tonerElement.Element("CurrentLevel")?.Element("LevelPer")?.Value;
+                    float percent = (percentString != null) ? float.Parse(percentString) : -1.0f;
 
-                    var stateNode = tonerElement.SelectSingleNode("./CurrentLevel/LevelState/text()");
-                    var state = (stateNode != null) ? stateNode.Value : "";
+                    string state = tonerElement.Element("CurrentLevel")?.Element("LevelState")?.Value ?? "";
 
                     bool isEmpty, isLow;
                     if (state == "NearLifeEnd" || state == "NearEmpty")
@@ -330,7 +357,7 @@ namespace KMBizhubHealthModule
                     }
 
                     var styleClasses = new List<string> { "toner" };
-                    if (colorNode != null)
+                    if (color != null)
                     {
                         styleClasses.Add(color.ToLowerInvariant());
                     }
@@ -341,32 +368,34 @@ namespace KMBizhubHealthModule
 
             // fetch the paper info
             var newMedia = new List<BizhubPaper>();
-            var mediumElements = consumeStatusDoc.SelectNodes("/MFP/DeviceInfo/Input/TrayList/Tray[./Type != 'MultiManual']");
+            IEnumerable<XElement> mediumElements = consumeStatusDoc
+                .Element("MFP")
+                ?.Element("DeviceInfo")
+                ?.Element("Input")
+                ?.Element("TrayList")
+                ?.Elements("Tray")
+                ?.Where(t => t.Element("Type")?.Value != "MultiManual")
+            ;
             if (mediumElements != null)
             {
-                foreach (XmlNode mediumElement in mediumElements)
+                foreach (XElement mediumElement in mediumElements)
                 {
-                    var mediumNameNode = mediumElement.SelectSingleNode("./TrayID/text()");
-                    var mediumName = (mediumNameNode != null) ? mediumNameNode.Value : "?";
+                    string mediumName = mediumElement.Element("TrayID")?.Value ?? "?";
 
-                    var mediumStateNode = mediumElement.SelectSingleNode("./CurrentLevel/LevelState/text()");
-                    var mediumState = (mediumStateNode != null) ? mediumStateNode.Value : "";
+                    string mediumState = mediumElement.Element("CurrentLevel")?.Element("LevelState")?.Value ?? "";
 
-                    var paperNameNode = mediumElement.SelectSingleNode("./CurrentPaper/Size/Name/text()");
-                    var sizeCodeNode = mediumElement.SelectSingleNode("./CurrentPaper/Size/SizeCode/text()");
-                    var paperSizeName = (sizeCodeNode != null)
-                        ? sizeCodeNode.Value
-                        : ((paperNameNode != null) ? paperNameNode.Value : "");
+                    string paperName = mediumElement.Element("CurrentPaper")?.Element("Size")?.Element("Name")?.Value;
+                    string sizeCode = mediumElement.Element("CurrentPaper")?.Element("Size")?.Element("SizeCode")?.Value;
+                    string paperSizeName = sizeCode ?? (paperName ?? "");
 
-                    var mediaTypeNode = mediumElement.SelectSingleNode("./CurrentPaper/MediaType/text()");
-                    var mediaType = (mediaTypeNode != null) ? mediaTypeNode.Value : "";
+                    string mediaType = mediumElement?.Element("CurrentPaper")?.Element("MediaType")?.Value ?? "";
 
                     var codeName = string.Format("{0}//{1}", paperSizeName, mediaType);
 
                     var mediumDescription = mediumName;
-                    if (paperNameNode != null)
+                    if (paperName != null)
                     {
-                        mediumDescription += string.Format(" ({0})", paperNameNode.Value);
+                        mediumDescription += string.Format(" ({0})", paperName);
                     }
 
                     bool isEmpty, isLow;
@@ -391,9 +420,9 @@ namespace KMBizhubHealthModule
                     }
 
                     var styleClasses = new List<string> { "paper" };
-                    if (paperNameNode != null)
+                    if (paperName != null)
                     {
-                        styleClasses.Add(paperNameNode.Value.ToLowerInvariant());
+                        styleClasses.Add(paperName.ToLowerInvariant());
                     }
 
                     newMedia.Add(new BizhubPaper(isEmpty, isLow, codeName, mediumDescription, styleClasses));
@@ -401,13 +430,24 @@ namespace KMBizhubHealthModule
             }
 
             // fetch status codes etc.
-            var langDoc = FetchXml(EnglishLanguageEndpoint);
+            XDocument langDoc = FetchXml(EnglishLanguageEndpoint);
             var newStatus = new List<BizhubStatus>();
-            var printerStatusNode = consumeStatusDoc.SelectSingleNode("/MFP/Common/DeviceStatus/PrintStatus/text()");
-            var scannerStatusNode = consumeStatusDoc.SelectSingleNode("/MFP/Common/DeviceStatus/ScanStatus/text()");
-            if (printerStatusNode != null)
+            string printerStatus = consumeStatusDoc
+                .Element("MFP")
+                ?.Element("Common")
+                ?.Element("DeviceStatus")
+                ?.Element("PrintStatus")
+                ?.Value;
+            string scannerStatus = consumeStatusDoc
+                .Element("MFP")
+                ?.Element("Common")
+                ?.Element("DeviceStatus")
+                ?.Element("ScanStatus")
+                ?.Value;
+
+            if (printerStatus != null)
             {
-                var printerStatusCode = int.Parse(printerStatusNode.Value);
+                var printerStatusCode = int.Parse(printerStatus);
 
                 StatusLevel level;
                 if (printerStatusCode < 130000)
@@ -425,14 +465,21 @@ namespace KMBizhubHealthModule
                 }
 
                 // find a description
-                var langNode = langDoc.SelectSingleNode(string.Format("/MFP/Data/PrinterStatus/Item[@name = '{0}']/text()", printerStatusCode));
-                var statusDescription = langNode == null ? string.Format("??? ({0})", printerStatusCode) : langNode.Value;
+                string statusDescription = langDoc
+                    .Element("MFP")
+                    ?.Element("Data")
+                    ?.Element("PrinterStatus")
+                    ?.Elements("Item")
+                    ?.FirstOrDefault(it => it.Attribute("name").Value == printerStatusCode.ToString())
+                    ?.Value
+                    ?? $"??? ({printerStatusCode})"
+                ;
 
                 newStatus.Add(new BizhubStatus(level, printerStatusCode, statusDescription));
             }
-            if (scannerStatusNode != null)
+            if (scannerStatus != null)
             {
-                var scannerStatusCode = int.Parse(scannerStatusNode.Value);
+                var scannerStatusCode = int.Parse(scannerStatus);
 
                 StatusLevel level;
                 if (scannerStatusCode < 230000)
@@ -448,16 +495,23 @@ namespace KMBizhubHealthModule
                     level = StatusLevel.Error;
                 }
 
-                var langNode = langDoc.SelectSingleNode(string.Format("/MFP/Data/ScannerStatus/Item[@name = '{0}']/text()", scannerStatusCode));
-                var statusDescription = langNode == null ? string.Format("??? ({0})", scannerStatusCode) : langNode.Value;
+                string statusDescription = langDoc
+                    .Element("MFP")
+                    ?.Element("Data")
+                    ?.Element("ScannerStatus")
+                    ?.Elements("Item")
+                    ?.FirstOrDefault(it => it.Attribute("name").Value == scannerStatus.ToString())
+                    ?.Value
+                    ?? $"??? ({scannerStatusCode})"
+                ;
 
                 newStatus.Add(new BizhubStatus(level, scannerStatusCode, statusDescription));
             }
 
             // fetch active jobs
-            var jobsDoc = FetchXml(ActiveJobsEndpoint);
-            var jobNodes = jobsDoc.SelectNodes(AllJobsXPath);
-            var newJobCount = (jobNodes != null) ? jobNodes.Count : 0;
+            XDocument jobsDoc = FetchXml(ActiveJobsEndpoint);
+            IEnumerable<XElement> jobNodes = AllJobs(jobsDoc);
+            var newJobCount = (jobNodes != null) ? jobNodes.Count() : 0;
 
             lock (_lock)
             {
