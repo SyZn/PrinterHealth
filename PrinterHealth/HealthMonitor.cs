@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
+#if NETCORE
+using System.Runtime.Loader;
+#endif
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -125,7 +129,11 @@ namespace PrinterHealth
                     continue;
                 }
 
-                var assembly = Assembly.Load(new AssemblyName(printer.Assembly));
+#if NETCORE
+                Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(PrinterHealthUtils.ProgramDirectory, printer.Assembly));
+#else
+                Assembly assembly = Assembly.LoadFile(Path.Combine(PrinterHealthUtils.ProgramDirectory, printer.Assembly));
+#endif
                 if (assembly == null)
                 {
                     Logger.LogError(
