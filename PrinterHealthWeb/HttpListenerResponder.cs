@@ -95,7 +95,7 @@ namespace PrinterHealthWeb
         protected virtual void HandleRequest(HttpContext ctx)
         {
             var method = ctx.Request.Method;
-            var path = ctx.Request.GetEncodedUrl();
+            string path = ctx.Request.Path;
 
             if (path == "/")
             {
