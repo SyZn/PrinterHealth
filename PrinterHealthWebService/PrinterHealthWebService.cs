@@ -17,11 +17,6 @@ namespace PrinterHealthWebService
         private const string ServiceDescription = "Monitors printers and consolidates their status information in a web frontend.";
         private const bool AutoStart = true;
 
-        public PrinterHealthWebService()
-        {
-            var service = new PrinterHealthWebService();
-        }
-
         public void Start(string[] args, ServiceStoppedCallback callbacks)
         {
             CentralizedLogger.SetupConsoleLogging();
