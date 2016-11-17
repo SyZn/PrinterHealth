@@ -1,4 +1,4 @@
-﻿using System.ServiceProcess;
+﻿using DasMulli.Win32.ServiceUtils;
 
 namespace PrinterHealthWebService
 {
@@ -9,11 +9,9 @@ namespace PrinterHealthWebService
         /// </summary>
         static void Main()
         {
-            var servicesToRun = new ServiceBase[] 
-            { 
-                new PrinterHealthWebService() 
-            };
-            ServiceBase.Run(servicesToRun);
+            var service = new PrinterHealthWebService();
+            var serviceHost = new Win32ServiceHost(service);
+            serviceHost.Run();
         }
     }
 }

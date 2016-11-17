@@ -1,25 +1,33 @@
-﻿using System.ServiceProcess;
+﻿using DasMulli.Win32.ServiceUtils;
 using PrinterHealth;
 using PrinterHealth.Config;
 using PrinterHealthWeb;
+using RavuAlHemio.CentralizedLog;
 
 namespace PrinterHealthWebService
 {
-    public partial class PrinterHealthWebService : ServiceBase
+    public partial class PrinterHealthWebService : IWin32Service
     {
         private PrinterHealthConfig _config;
         private HealthMonitor _monitor;
         private HttpListenerResponder _responder;
 
+        public string ServiceName => "PrinterHealthWebService";
+        private const string ServiceDisplayName = "Printer Health Web";
+        private const string ServiceDescription = "Monitors printers and consolidates their status information in a web frontend.";
+        private const bool AutoStart = true;
+
         public PrinterHealthWebService()
         {
-            InitializeComponent();
+            var service = new PrinterHealthWebService();
         }
 
-        protected override void OnStart(string[] args)
+        public void Start(string[] args, ServiceStoppedCallback callbacks)
         {
+            CentralizedLogger.SetupConsoleLogging();
+            CentralizedLogger.SetupFileLogging("PrinterHealthWeb");
+
             _config = PrinterHealthUtils.LoadConfig();
-            PrinterHealthUtils.SetupLogging();
 
             // start the health monitor
             _monitor = new HealthMonitor(_config);
@@ -30,7 +38,7 @@ namespace PrinterHealthWebService
             _responder.Start();
         }
 
-        protected override void OnStop()
+        public void Stop()
         {
             _responder.Stop();
             _monitor.Dispose();
