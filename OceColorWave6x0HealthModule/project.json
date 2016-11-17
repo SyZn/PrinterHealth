@@ -1,6 +1,6 @@
 {
   "name": "OceColorWave6x0HealthModule",
-  "version": "0.0.10-*",
+  "version": "0.0.11-*",
   "buildOptions": {
     "debugType": "portable"
   },
