@@ -86,7 +86,8 @@ namespace KMBizhubHealthModule
             var clientHandler = new HttpClientHandler
             {
                 AllowAutoRedirect = true,
-                CookieContainer = CookieJar
+                CookieContainer = CookieJar,
+                UseCookies = true
             };
             if (!Config.VerifyHttpsCertificate)
             {
@@ -221,8 +222,7 @@ namespace KMBizhubHealthModule
                 new Cookie(
                     cookieName,
                     cookieValue,
-                    "/",
-                    Config.Hostname
+                    "/"
                 )
             );
         }
@@ -232,6 +232,7 @@ namespace KMBizhubHealthModule
             // I want the HTML edition
             AddCookie("vm", "Html");
 
+            HttpResponseMessage response;
             if (Config.PerformLogin)
             {
                 var values = new Dictionary<string, string>
@@ -240,11 +241,19 @@ namespace KMBizhubHealthModule
                     {"R_ADM", "Admin"},
                     {"password", Config.AdminPassword}
                 };
-                Client.PostAsync(GetUri(LoginEndpoint), new FormUrlEncodedContent(values)).SyncWait();
+                response = Client.PostAsync(GetUri(LoginEndpoint), new FormUrlEncodedContent(values)).SyncWait();
             }
             else
             {
-                Client.GetAsync(GetUri(NoLoginEndpoint)).SyncWait();
+                response = Client.GetAsync(GetUri(NoLoginEndpoint)).SyncWait();
+            }
+
+            // transfer cookies
+            foreach (string cookieRow in response.Headers.GetValues("Set-Cookie"))
+            {
+                string pureCookie = cookieRow.Split(';')[0].Trim();
+                string[] cookieNameAndValue = pureCookie.Split('=');
+                AddCookie(cookieNameAndValue[0], cookieNameAndValue[1]);
             }
         }
 
