@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using PrinterHealth;
 using PrinterHealthWeb;
 using RavuAlHemio.CentralizedLog;
@@ -18,19 +19,26 @@ namespace PrinterHealthWebCLI
             // start the health monitor
             var healthMonitor = new HealthMonitor(config);
             // (starts automatically)
-            
+
             // start the HTTP responder
             var httpResponder = new HttpListenerResponder(config, healthMonitor);
 
             httpResponder.Start();
 
-            Console.WriteLine("Press Enter or Escape to stop.");
-            for (;;)
+            if (Console.IsInputRedirected)
             {
-                var key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Escape || key.Key == ConsoleKey.Enter)
+                Thread.Sleep(Timeout.Infinite);
+            }
+            else
+            {
+                Console.WriteLine("Press Enter or Escape to stop.");
+                for (;;)
                 {
-                    break;
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Escape || key.Key == ConsoleKey.Enter)
+                    {
+                        break;
+                    }
                 }
             }
 
