@@ -9,7 +9,7 @@
     "PrinterHealthWeb": {
       "target": "project"
     },
-    "RavuAlHemio.CentralizedLog": "0.0.1"
+    "RavuAlHemio.CentralizedLog": "0.0.2"
   },
   "frameworks": {
     "netcoreapp1.0": {
