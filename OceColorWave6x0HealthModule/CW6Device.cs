@@ -261,7 +261,7 @@ namespace OceColorWave6x0HealthModule
                 AddFormData(content, "uploadedFileIds", "file_0");
                 AddOctetStreamFileData(content, "file_0", "KEEPWARM", CW6Data.KeepWarmJob.ToBytesNaiveEncoding().ToArray());
                 httpRequest.Content = content;
-                client.SendAsync(httpRequest).SyncWait();
+                client.SendAsync(httpRequest).SyncWait().Dispose();
 
                 // poll until the job appears
                 long? warmJobID = null;
@@ -311,7 +311,7 @@ namespace OceColorWave6x0HealthModule
                         ["jobTypes"] = "queue",
                         ["check"] = warmJobID.Value.ToString(CultureInfo.InvariantCulture)
                     });
-                    client.SendAsync(deleteRequest).SyncWait();
+                    client.SendAsync(deleteRequest).SyncWait().Dispose();
 
                     // done
                     break;
