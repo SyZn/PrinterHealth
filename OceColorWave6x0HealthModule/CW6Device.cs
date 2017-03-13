@@ -177,7 +177,7 @@ namespace OceColorWave6x0HealthModule
                 return JsonConvert.DeserializeObject<T>(docString);
             }
         }
-
+ 
         public void Update()
         {
             var statusObject = FetchJson<CW6JsonStatus.Status>(StatusEndpoint);
@@ -335,7 +335,7 @@ namespace OceColorWave6x0HealthModule
             var innerContent = new StringContent(value, PrinterHealthUtils.Utf8NoBom);
             innerContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
             {
-                Name = name
+                Name = $"\"{name}\""
             };
             mfdc.Add(innerContent);
         }
@@ -345,8 +345,8 @@ namespace OceColorWave6x0HealthModule
             var innerContent = new ByteArrayContent(content);
             innerContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
             {
-                Name = fieldName,
-                FileName = fileName
+                Name = $"\"{fieldName}\"",
+                FileName = $"\"{fileName}\""
             };
             innerContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             mfdc.Add(innerContent);
