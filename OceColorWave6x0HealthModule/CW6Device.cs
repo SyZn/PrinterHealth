@@ -26,7 +26,7 @@ namespace OceColorWave6x0HealthModule
         private readonly object _lock = new object();
 
         protected readonly CW6DeviceConfig Config;
-        protected readonly HttpClient Client;
+        protected HttpClientHandler ClientHandler { get; set; }
 
         protected List<CW6Toner> CWMarkers;
         protected List<CW6Paper> CWMedia;
@@ -135,6 +135,16 @@ namespace OceColorWave6x0HealthModule
                 : fullName;
         }
 
+        protected virtual HttpClient GetNewClient()
+        {
+            var client = new HttpClient(ClientHandler)
+            {
+                Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
+            };
+            client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en");
+            return client;
+        }
+
         /// <summary>
         /// Returns the URI for a specific endpoint on the printer.
         /// </summary>
@@ -156,8 +166,11 @@ namespace OceColorWave6x0HealthModule
         /// <param name="endpoint">The endpoint for which to return the XML document.</param>
         protected virtual T FetchJson<T>(string endpoint)
         {
-            string docString = Client.GetStringAsync(GetUri(endpoint)).SyncWait();
-            return JsonConvert.DeserializeObject<T>(docString);
+            using (var client = GetNewClient())
+            {
+                string docString = client.GetStringAsync(GetUri(endpoint)).SyncWait();
+                return JsonConvert.DeserializeObject<T>(docString);
+            }
         }
 
         public void Update()
@@ -210,91 +223,94 @@ namespace OceColorWave6x0HealthModule
 
         public void KeepWarm()
         {
-            // submit the empty job
-            Logger.LogDebug("submitting keep-warm job to {Hostname}", Config.Hostname);
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, GetUri(SubmitJobEndpoint));
-            var content = new MultipartFormDataContent();
-            AddFormData(content, "measurementUnit", "METRIC");
-            AddFormData(content, "medium_auto", "anyMediaType");
-            AddFormData(content, "medium_no_zoom", "anyMediaType");
-            AddFormData(content, "scale", "NO_ZOOM");
-            AddFormData(content, "flip_image", "flip_image_no");
-            AddFormData(content, "orientation", "AUTO");
-            AddFormData(content, "printmode", "auto");
-            AddFormData(content, "colourmode", "COLOUR");
-            AddFormData(content, "alignment", "TOP_RIGHT");
-            AddFormData(content, "horizontalShift", "0");
-            AddFormData(content, "verticalShift", "0");
-            AddFormData(content, "cutsize", "SYNCHRO");
-            AddFormData(content, "addLeadingStrip", "0");
-            AddFormData(content, "addTrailingStrip", "0");
-            AddFormData(content, "sheetDelivery", "TDT");
-            AddFormData(content, "jobId", "");
-            AddFormData(content, "docboxName", "Public");
-            AddFormData(content, "directPrint", "directPrint");
-            AddFormData(content, "hidden_directPrint", "true");
-            AddFormData(content, "userName", "PRINTERHEALTH");
-            AddFormData(content, "nrOfCopies", "1");
-            AddFormData(content, "collate", "on");
-            AddFormData(content, "uploadedFilenames", "KEEPWARM");
-            AddFormData(content, "jobnameInput", "KEEPWARM");
-            AddFormData(content, "uploadedFileIds", "file_0");
-            AddOctetStreamFileData(content, "file_0", "KEEPWARM", CW6Data.KeepWarmJob.ToBytesNaiveEncoding().ToArray());
-            httpRequest.Content = content;
-            Client.SendAsync(httpRequest).SyncWait();
-
-            // poll until the job appears
-            long? warmJobID = null;
-            for (;;)
+            using (var client = GetNewClient())
             {
-                var jobsJson = FetchJson<JObject>(JobListEndpoint);
-                var jobsJsonBody = jobsJson["body"] as JObject;
-                var jobsJsonRow = jobsJsonBody?["row"] as JArray;
-                if (jobsJsonRow != null)
-                {
-                    foreach (var row in jobsJsonRow.OfType<JObject>())
-                    {
-                        var rowColumns = row["column"] as JArray;
-                        if (rowColumns == null || rowColumns.Count <= 2)
-                        {
-                            continue;
-                        }
+                // submit the empty job
+                Logger.LogDebug("submitting keep-warm job to {Hostname}", Config.Hostname);
+                var httpRequest = new HttpRequestMessage(HttpMethod.Post, GetUri(SubmitJobEndpoint));
+                var content = new MultipartFormDataContent();
+                AddFormData(content, "measurementUnit", "METRIC");
+                AddFormData(content, "medium_auto", "anyMediaType");
+                AddFormData(content, "medium_no_zoom", "anyMediaType");
+                AddFormData(content, "scale", "NO_ZOOM");
+                AddFormData(content, "flip_image", "flip_image_no");
+                AddFormData(content, "orientation", "AUTO");
+                AddFormData(content, "printmode", "auto");
+                AddFormData(content, "colourmode", "COLOUR");
+                AddFormData(content, "alignment", "TOP_RIGHT");
+                AddFormData(content, "horizontalShift", "0");
+                AddFormData(content, "verticalShift", "0");
+                AddFormData(content, "cutsize", "SYNCHRO");
+                AddFormData(content, "addLeadingStrip", "0");
+                AddFormData(content, "addTrailingStrip", "0");
+                AddFormData(content, "sheetDelivery", "TDT");
+                AddFormData(content, "jobId", "");
+                AddFormData(content, "docboxName", "Public");
+                AddFormData(content, "directPrint", "directPrint");
+                AddFormData(content, "hidden_directPrint", "true");
+                AddFormData(content, "userName", "PRINTERHEALTH");
+                AddFormData(content, "nrOfCopies", "1");
+                AddFormData(content, "collate", "on");
+                AddFormData(content, "uploadedFilenames", "KEEPWARM");
+                AddFormData(content, "jobnameInput", "KEEPWARM");
+                AddFormData(content, "uploadedFileIds", "file_0");
+                AddOctetStreamFileData(content, "file_0", "KEEPWARM", CW6Data.KeepWarmJob.ToBytesNaiveEncoding().ToArray());
+                httpRequest.Content = content;
+                client.SendAsync(httpRequest).SyncWait();
 
-                        var checkboxColumn = rowColumns[0] as JObject;
-                        var jobNameColumn = rowColumns[2] as JObject;
-                        if (checkboxColumn?.Property("text") != null && ((string)jobNameColumn?["text"]) == "KEEPWARM")
+                // poll until the job appears
+                long? warmJobID = null;
+                for (;;)
+                {
+                    var jobsJson = FetchJson<JObject>(JobListEndpoint);
+                    var jobsJsonBody = jobsJson["body"] as JObject;
+                    var jobsJsonRow = jobsJsonBody?["row"] as JArray;
+                    if (jobsJsonRow != null)
+                    {
+                        foreach (var row in jobsJsonRow.OfType<JObject>())
                         {
-                            warmJobID = long.Parse((string)checkboxColumn["text"]);
+                            var rowColumns = row["column"] as JArray;
+                            if (rowColumns == null || rowColumns.Count <= 2)
+                            {
+                                continue;
+                            }
+
+                            var checkboxColumn = rowColumns[0] as JObject;
+                            var jobNameColumn = rowColumns[2] as JObject;
+                            if (checkboxColumn?.Property("text") != null && ((string)jobNameColumn?["text"]) == "KEEPWARM")
+                            {
+                                warmJobID = long.Parse((string)checkboxColumn["text"]);
+                            }
                         }
                     }
+
+                    if (!warmJobID.HasValue)
+                    {
+                        // sleep!
+                        Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforePollSeconds));
+
+                        // again!
+                        continue;
+                    }
+
+                    // found
+
+                    // make sure the plotter started processing the job
+                    Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforeDeleteSeconds));
+
+                    // delete it
+                    Logger.LogDebug("deleting keep-warm job from {Hostname}", Config.Hostname);
+                    var deleteRequest = new HttpRequestMessage(HttpMethod.Post, GetUri(DeleteJobEndpoint));
+                    deleteRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        ["jobTypes"] = "queue",
+                        ["check"] = warmJobID.Value.ToString(CultureInfo.InvariantCulture)
+                    });
+                    client.SendAsync(deleteRequest).SyncWait();
+
+                    // done
+                    break;
                 }
-
-                if (!warmJobID.HasValue)
-                {
-                    // sleep!
-                    Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforePollSeconds));
-
-                    // again!
-                    continue;
-                }
-
-                // found
-
-                // make sure the plotter started processing the job
-                Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforeDeleteSeconds));
-
-                // delete it
-                Logger.LogDebug("deleting keep-warm job from {Hostname}", Config.Hostname);
-                var deleteRequest = new HttpRequestMessage(HttpMethod.Post, GetUri(DeleteJobEndpoint));
-                deleteRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["jobTypes"] = "queue",
-                    ["check"] = warmJobID.Value.ToString(CultureInfo.InvariantCulture)
-                });
-                Client.SendAsync(deleteRequest).SyncWait();
-
-                // done
-                break;
             }
         }
 
@@ -302,17 +318,12 @@ namespace OceColorWave6x0HealthModule
         {
             Config = new CW6DeviceConfig(jo);
 
-            var clientHandler = new HttpClientHandler();
+            ClientHandler = new HttpClientHandler();
             if (!Config.VerifyHttpsCertificate)
             {
-                clientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+                ClientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
             }
-            Client = new HttpClient(clientHandler)
-            {
-                Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
-            };
 
-            Client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en");
             CWMarkers = new List<CW6Toner>();
             CWMedia = new List<CW6Paper>();
             CWStatusMessages = new List<CW6Status>();

@@ -72,7 +72,7 @@ namespace KMBizhubHealthModule
         /// <summary>
         /// The web client.
         /// </summary>
-        protected readonly HttpClient Client;
+        protected HttpClientHandler ClientHandler { get; set; }
 
         /// <summary>
         /// Initialize a KMBizhubDevice with the given parameters.
@@ -83,7 +83,7 @@ namespace KMBizhubHealthModule
             Config = new BizhubDeviceConfig(parameters);
             CookieJar = new CookieContainer();
 
-            var clientHandler = new HttpClientHandler
+            ClientHandler = new HttpClientHandler
             {
                 AllowAutoRedirect = true,
                 CookieContainer = CookieJar,
@@ -91,12 +91,8 @@ namespace KMBizhubHealthModule
             };
             if (!Config.VerifyHttpsCertificate)
             {
-                clientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+                ClientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
             }
-            Client = new HttpClient(clientHandler)
-            {
-                Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
-            };
 
             BizhubMarkers = new List<BizhubToner>();
             BizhubMedia = new List<BizhubPaper>();
@@ -132,6 +128,14 @@ namespace KMBizhubHealthModule
             ;
         }
 
+        protected virtual HttpClient GetNewClient()
+        {
+            return new HttpClient(ClientHandler)
+            {
+                Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
+            };
+        }
+
         /// <summary>
         /// Returns the URI for a specific endpoint on the printer.
         /// </summary>
@@ -153,7 +157,8 @@ namespace KMBizhubHealthModule
         /// <param name="endpoint">The endpoint for which to return the XML document.</param>
         protected virtual XDocument FetchXml(string endpoint)
         {
-            using (Stream stream = Client.GetStreamAsync(GetUri(endpoint)).SyncWait())
+            using (var client = GetNewClient())
+            using (Stream stream = client.GetStreamAsync(GetUri(endpoint)).SyncWait())
             {
                 return XDocument.Load(stream);
             }
@@ -207,7 +212,10 @@ namespace KMBizhubHealthModule
                 {"H_JID", jobID}
             };
 
-            Client.PostAsync(GetUri(DeleteJobEndpoint), new FormUrlEncodedContent(values)).SyncWait();
+            using (var client = GetNewClient())
+            {
+                client.PostAsync(GetUri(DeleteJobEndpoint), new FormUrlEncodedContent(values)).SyncWait();
+            }
         }
 
         public override string ToString()
@@ -233,19 +241,22 @@ namespace KMBizhubHealthModule
             AddCookie("vm", "Html");
 
             HttpResponseMessage response;
-            if (Config.PerformLogin)
+            using (var client = GetNewClient())
             {
-                var values = new Dictionary<string, string>
+                if (Config.PerformLogin)
                 {
-                    {"func", "PSL_LP0_TOP"},
-                    {"R_ADM", "Admin"},
-                    {"password", Config.AdminPassword}
-                };
-                response = Client.PostAsync(GetUri(LoginEndpoint), new FormUrlEncodedContent(values)).SyncWait();
-            }
-            else
-            {
-                response = Client.GetAsync(GetUri(NoLoginEndpoint)).SyncWait();
+                    var values = new Dictionary<string, string>
+                    {
+                        {"func", "PSL_LP0_TOP"},
+                        {"R_ADM", "Admin"},
+                        {"password", Config.AdminPassword}
+                    };
+                    response = client.PostAsync(GetUri(LoginEndpoint), new FormUrlEncodedContent(values)).SyncWait();
+                }
+                else
+                {
+                    response = client.GetAsync(GetUri(NoLoginEndpoint)).SyncWait();
+                }
             }
 
             // transfer cookies
