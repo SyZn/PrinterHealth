@@ -26,7 +26,6 @@ namespace OceColorWave6x0HealthModule
         private readonly object _lock = new object();
 
         protected readonly CW6DeviceConfig Config;
-        protected HttpClientHandler ClientHandler { get; set; }
 
         protected List<CW6Toner> CWMarkers;
         protected List<CW6Paper> CWMedia;
@@ -137,7 +136,13 @@ namespace OceColorWave6x0HealthModule
 
         protected virtual HttpClient GetNewClient()
         {
-            var client = new HttpClient(ClientHandler)
+            var clientHandler = new HttpClientHandler();
+            if (!Config.VerifyHttpsCertificate)
+            {
+                clientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+            }
+
+            var client = new HttpClient(clientHandler)
             {
                 Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
             };
@@ -317,12 +322,6 @@ namespace OceColorWave6x0HealthModule
         public CW6Device(JObject jo)
         {
             Config = new CW6DeviceConfig(jo);
-
-            ClientHandler = new HttpClientHandler();
-            if (!Config.VerifyHttpsCertificate)
-            {
-                ClientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
-            }
 
             CWMarkers = new List<CW6Toner>();
             CWMedia = new List<CW6Paper>();

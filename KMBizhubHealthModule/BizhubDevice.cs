@@ -70,11 +70,6 @@ namespace KMBizhubHealthModule
         protected readonly CookieContainer CookieJar;
 
         /// <summary>
-        /// The web client.
-        /// </summary>
-        protected HttpClientHandler ClientHandler { get; set; }
-
-        /// <summary>
         /// Initialize a KMBizhubDevice with the given parameters.
         /// </summary>
         /// <param name="parameters">Parameters to this module.</param>
@@ -82,17 +77,6 @@ namespace KMBizhubHealthModule
         {
             Config = new BizhubDeviceConfig(parameters);
             CookieJar = new CookieContainer();
-
-            ClientHandler = new HttpClientHandler
-            {
-                AllowAutoRedirect = true,
-                CookieContainer = CookieJar,
-                UseCookies = true
-            };
-            if (!Config.VerifyHttpsCertificate)
-            {
-                ClientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
-            }
 
             BizhubMarkers = new List<BizhubToner>();
             BizhubMedia = new List<BizhubPaper>();
@@ -130,7 +114,18 @@ namespace KMBizhubHealthModule
 
         protected virtual HttpClient GetNewClient()
         {
-            return new HttpClient(ClientHandler)
+            var clientHandler = new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+                CookieContainer = CookieJar,
+                UseCookies = true
+            };
+            if (!Config.VerifyHttpsCertificate)
+            {
+                clientHandler.ServerCertificateCustomValidationCallback = PrinterHealthUtils.NoCertificateValidationCallback;
+            }
+
+            return new HttpClient(clientHandler)
             {
                 Timeout = TimeSpan.FromSeconds(Config.TimeoutSeconds)
             };
