@@ -265,6 +265,7 @@ namespace OceColorWave6x0HealthModule
 
                 // poll until the job appears
                 long? warmJobID = null;
+                int pollCounter = 0;
                 for (;;)
                 {
                     var jobsJson = FetchJson<JObject>(JobListEndpoint);
@@ -291,6 +292,18 @@ namespace OceColorWave6x0HealthModule
 
                     if (!warmJobID.HasValue)
                     {
+                        if (pollCounter >= Config.KeepWarmMaxPollCount)
+                        {
+                            Logger.LogWarning(
+                                "unsuccessfully polled {Hostname} {PollCount} times for keep-warm job; giving up",
+                                Config.Hostname,
+                                pollCounter
+                            );
+                            return;
+                        }
+
+                        ++pollCounter;
+
                         // sleep!
                         Thread.Sleep(TimeSpan.FromSeconds(Config.KeepWarmWaitBeforePollSeconds));
 

@@ -34,6 +34,11 @@ namespace OceColorWave6x0HealthModule
         public int KeepWarmWaitBeforePollSeconds { get; set; }
 
         /// <summary>
+        /// How many times to poll for the creation of the keep-warm job before giving up.
+        /// </summary>
+        public int KeepWarmMaxPollCount { get; set; }
+
+        /// <summary>
         /// How many seconds to wait between finding a keep-warm job in the job list and deleting it.
         /// </summary>
         public int KeepWarmWaitBeforeDeleteSeconds { get; set; }
@@ -50,6 +55,7 @@ namespace OceColorWave6x0HealthModule
             TimeoutSeconds = 10;
             KeepWarmWaitBeforePollSeconds = 5;
             KeepWarmWaitBeforeDeleteSeconds = 2;
+            KeepWarmMaxPollCount = 30;
             ShortMediaTypeNames = new Dictionary<string, string>();
             MediaTypeNormalization = new Dictionary<string, string>();
 
