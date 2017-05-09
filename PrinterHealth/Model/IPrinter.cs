@@ -35,6 +35,11 @@ namespace PrinterHealth.Model
         int JobCount { get; }
 
         /// <summary>
+        /// Whether the printer currently accepts new jobs through its primary submission channel.
+        /// </summary>
+        bool ReadyForSubmission { get; }
+
+        /// <summary>
         /// The URI to this printer's web interface, or <c>null</c> if the printer has none.
         /// </summary>
         string WebInterfaceUri { get; }

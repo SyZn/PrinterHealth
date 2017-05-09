@@ -44,6 +44,11 @@ namespace OceColorWave6x0HealthModule
         public int KeepWarmWaitBeforeDeleteSeconds { get; set; }
 
         /// <summary>
+        /// Check whether the LPD port is open.
+        /// </summary>
+        public bool CheckLPD { get; set; }
+
+        /// <summary>
         /// Mapping from full to short media type names.
         /// </summary>
         public Dictionary<string, string> ShortMediaTypeNames { get; set; }

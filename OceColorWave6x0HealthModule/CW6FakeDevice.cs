@@ -41,21 +41,17 @@ namespace OceColorWave6x0HealthModule
             LastUpdated = null;
         }
 
-        public virtual IReadOnlyCollection<IMarker> Markers
-        {
-            get { return LastUpdated.HasValue ? FullToners : EmptyToners; }
-        }
+        public virtual IReadOnlyCollection<IMarker> Markers => LastUpdated.HasValue ? FullToners : EmptyToners;
 
-        public virtual IReadOnlyCollection<IMedium> Media
-        {
-            get { return LastUpdated.HasValue ? FullPapers : EmptyPapers; }
-        }
+        public virtual IReadOnlyCollection<IMedium> Media => LastUpdated.HasValue ? FullPapers : EmptyPapers;
 
-        public virtual IReadOnlyCollection<IStatusInfo> CurrentStatusMessages { get { return Statuses; } }
+        public virtual IReadOnlyCollection<IStatusInfo> CurrentStatusMessages => Statuses;
 
-        public virtual int JobCount { get { return 0; } }
+        public virtual int JobCount => 0;
 
-        public virtual string WebInterfaceUri { get { return null; } }
+        public virtual string WebInterfaceUri => null;
+
+        public virtual bool ReadyForSubmission => true;
 
         public virtual void Update()
         {

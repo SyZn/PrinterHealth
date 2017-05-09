@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Xml.Linq;
@@ -32,6 +33,7 @@ namespace KMBizhubHealthModule
         protected List<BizhubPaper> BizhubMedia;
         protected List<BizhubStatus> BizhubStatus;
         protected int BizhubJobCount;
+        protected bool BizhubReadyForSubmission;
         protected DateTimeOffset? BizhubLastUpdated;
 
         /// <summary>
@@ -81,6 +83,7 @@ namespace KMBizhubHealthModule
             BizhubMarkers = new List<BizhubToner>();
             BizhubMedia = new List<BizhubPaper>();
             BizhubJobCount = 0;
+            BizhubReadyForSubmission = false;
             BizhubStatus = new List<BizhubStatus>();
             BizhubLastUpdated = null;
         }
@@ -283,15 +286,17 @@ namespace KMBizhubHealthModule
             get { lock (_lock) { return BizhubJobCount; } }
         }
 
+        public virtual bool ReadyForSubmission
+        {
+            get { lock (_lock) { return BizhubReadyForSubmission; } }
+        }
+
         public virtual DateTimeOffset? LastUpdated
         {
             get { lock (_lock) { return BizhubLastUpdated; } }
         }
 
-        public virtual string WebInterfaceUri
-        {
-            get { return string.Format("http{0}://{1}/", Config.Https ? "s" : "", Config.Hostname); }
-        }
+        public virtual string WebInterfaceUri => string.Format("http{0}://{1}/", Config.Https ? "s" : "", Config.Hostname);
 
         public virtual void CleanupBrokenJobs()
         {
@@ -528,6 +533,16 @@ namespace KMBizhubHealthModule
             IEnumerable<XElement> jobNodes = AllJobs(jobsDoc);
             var newJobCount = (jobNodes != null) ? jobNodes.Count() : 0;
 
+            // ready for submission?
+            bool readyForSubmission = false;
+            using (var client = new TcpClient())
+            {
+                if (client.ConnectAsync(Config.Hostname, PrinterHealthUtils.LPDPortNumber).Wait(TimeSpan.FromSeconds(5.0)))
+                {
+                    readyForSubmission = true;
+                }
+            }
+
             lock (_lock)
             {
                 BizhubMarkers = newMarkers;
@@ -535,6 +550,7 @@ namespace KMBizhubHealthModule
                 BizhubStatus = newStatus;
                 BizhubJobCount = newJobCount;
                 BizhubLastUpdated = DateTimeOffset.Now;
+                BizhubReadyForSubmission = readyForSubmission;
             }
         }
     }

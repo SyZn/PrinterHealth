@@ -21,6 +21,8 @@ namespace PrinterHealth
 
         public static string ProgramDirectory => AppContext.BaseDirectory;
 
+        public const int LPDPortNumber = 515;
+
         public static PrinterHealthConfig LoadConfig()
         {
             var configBody = File.ReadAllText(Path.Combine(ProgramDirectory, "Config.json"), Utf8NoBom);

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -32,6 +33,7 @@ namespace OceColorWave6x0HealthModule
         protected List<CW6Status> CWStatusMessages;
         protected DateTimeOffset? CWLastUpdated;
         protected int CWJobCount;
+        protected bool CWReadyForSubmission;
 
         /// <summary>
         /// The endpoint at which to request status.
@@ -67,33 +69,35 @@ namespace OceColorWave6x0HealthModule
 
         public virtual IReadOnlyCollection<IMarker> Markers
         {
-            get { return CWMarkers; }
+            get { lock (_lock) { return CWMarkers; } }
         }
 
         public virtual IReadOnlyCollection<IMedium> Media
         {
-            get { return CWMedia; }
+            get { lock (_lock) { return CWMedia; } }
         }
 
         public virtual IReadOnlyCollection<IStatusInfo> CurrentStatusMessages
         {
-            get { return CWStatusMessages; }
+            get { lock (_lock) { return CWStatusMessages; } }
         }
 
         public virtual DateTimeOffset? LastUpdated
         {
-            get { return CWLastUpdated; }
+            get { lock (_lock) { return CWLastUpdated; } }
         }
 
         public virtual int JobCount
         {
-            get { return CWJobCount; }
+            get { lock (_lock) { return CWJobCount; } }
         }
 
-        public virtual string WebInterfaceUri
+        public virtual bool ReadyForSubmission
         {
-            get { return string.Format("http{0}://{1}/", Config.Https ? "s" : "", Config.Hostname); }
+            get { lock (_lock) { return CWReadyForSubmission; } }
         }
+
+        public virtual string WebInterfaceUri => string.Format("http{0}://{1}/", Config.Https ? "s" : "", Config.Hostname);
 
         protected static string LetterToColor(string letter)
         {
@@ -216,6 +220,16 @@ namespace OceColorWave6x0HealthModule
                 }
             }
 
+            // ready for submission?
+            bool readyForSubmission = false;
+            using (var client = new TcpClient())
+            {
+                if (client.ConnectAsync(Config.Hostname, PrinterHealthUtils.LPDPortNumber).Wait(TimeSpan.FromSeconds(5.0)))
+                {
+                    readyForSubmission = true;
+                }
+            }
+
             lock (_lock)
             {
                 CWMedia = newRolls;
@@ -223,6 +237,7 @@ namespace OceColorWave6x0HealthModule
                 CWStatusMessages = newStatusList;
                 CWLastUpdated = DateTimeOffset.Now;
                 CWJobCount = newJobCount;
+                CWReadyForSubmission = readyForSubmission;
             }
         }
 
@@ -341,6 +356,7 @@ namespace OceColorWave6x0HealthModule
             CWStatusMessages = new List<CW6Status>();
             CWLastUpdated = null;
             CWJobCount = 0;
+            CWReadyForSubmission = false;
         }
 
         static void AddFormData(MultipartFormDataContent mfdc, string name, string value)
