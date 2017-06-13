@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>0.0.15</VersionPrefix>
+    <VersionPrefix>0.0.16</VersionPrefix>
     <TargetFrameworks>netstandard1.5;net46</TargetFrameworks>
     <DebugType>portable</DebugType>
     <AssemblyName>PrinterHealth</AssemblyName>
