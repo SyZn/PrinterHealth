@@ -206,8 +206,8 @@ namespace KMBizhubHealthModule
 
             var values = new Dictionary<string, string>
             {
-                {"func", "PSL_J_DEL"},
-                {"H_JID", jobID}
+                ["func"] = "PSL_J_DEL",
+                ["H_JID"] = jobID
             };
 
             using (var client = GetNewClient())
@@ -245,9 +245,9 @@ namespace KMBizhubHealthModule
                 {
                     var values = new Dictionary<string, string>
                     {
-                        {"func", "PSL_LP0_TOP"},
-                        {"R_ADM", "Admin"},
-                        {"password", Config.AdminPassword}
+                        ["func"] = "PSL_LP0_TOP",
+                        ["R_ADM"] = "Admin",
+                        ["password"] = Config.AdminPassword
                     };
                     response = client.PostAsync(GetUri(LoginEndpoint), new FormUrlEncodedContent(values)).SyncWait();
                 }

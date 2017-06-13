@@ -26,11 +26,11 @@ namespace PrinterHealthWeb
         protected static readonly Regex AllowedStaticFilenameFormat = new Regex("^[a-zA-Z0-9-_]+[.][a-zA-Z0-9]+$");
         protected static readonly Dictionary<string, string> ExtensionsToMimeTypes = new Dictionary<string, string>
         {
-            {"css", "text/css"},
-            {"js", "text/javascript"},
-            {"png", "image/png"},
-            {"jpg", "image/jpeg"},
-            {"jpeg", "image/jpeg"},
+            ["css"] = "text/css",
+            ["js"] = "text/javascript",
+            ["png"] = "image/png",
+            ["jpg"] = "image/jpeg",
+            ["jpeg"] = "image/jpeg",
         };
 
         protected IWebHost WebHost;
@@ -131,9 +131,9 @@ namespace PrinterHealthWeb
 
                         var mediumHash = new Hash
                         {
-                            {"description", medium.Description},
-                            {"style_classes", string.Join(" ", medium.StyleClasses)},
-                            {"status_class", statusClass}
+                            ["description"] = medium.Description,
+                            ["style_classes"] = string.Join(" ", medium.StyleClasses),
+                            ["status_class"] = statusClass
                         };
 
                         var measuredMedium = medium as IMeasuredMedium;
@@ -169,9 +169,9 @@ namespace PrinterHealthWeb
 
                         var markerHash = new Hash
                         {
-                            {"description", marker.Description},
-                            {"style_classes", string.Join(" ", marker.StyleClasses)},
-                            {"status_class", statusClass}
+                            ["description"] = marker.Description,
+                            ["style_classes"] = string.Join(" ", marker.StyleClasses),
+                            ["status_class"] = statusClass
                         };
 
                         var measuredMarker = marker as IMeasuredMarker;
@@ -190,8 +190,8 @@ namespace PrinterHealthWeb
 
                     var statusMessages = printer.Value.CurrentStatusMessages.Select(statusMessage => new Hash
                     {
-                        {"level_class", statusMessage.Level.ToString().ToLowerInvariant()},
-                        {"description", statusMessage.Description}
+                        ["level_class"] = statusMessage.Level.ToString().ToLowerInvariant(),
+                        ["description"] = statusMessage.Description
                     }).ToArray();
 
                     var lastUpdatedString = printer.Value.LastUpdated.HasValue
@@ -202,21 +202,21 @@ namespace PrinterHealthWeb
                     
                     return new Hash
                     {
-                        {"name", printer.Key},
-                        {"has_web_interface", (printer.Value.WebInterfaceUri != null)},
-                        {"web_interface_uri", printer.Value.WebInterfaceUri},
-                        {"active_jobs", printer.Value.JobCount.ToString(CultureInfo.InvariantCulture)},
-                        {"media", media},
-                        {"markers", markers},
-                        {"status_messages", statusMessages},
-                        {"last_updated", lastUpdatedString},
-                        {"last_updated_timeliness_class", lastUpdateTimely ? "timely" : "outdated"}
+                        ["name"] = printer.Key,
+                        ["has_web_interface"] = (printer.Value.WebInterfaceUri != null),
+                        ["web_interface_uri"] = printer.Value.WebInterfaceUri,
+                        ["active_jobs"] = printer.Value.JobCount.ToString(CultureInfo.InvariantCulture),
+                        ["media"] = media,
+                        ["markers"] = markers,
+                        ["status_messages"] = statusMessages,
+                        ["last_updated"] = lastUpdatedString,
+                        ["last_updated_timeliness_class"] = lastUpdateTimely ? "timely" : "outdated"
                     };
                 }).ToArray();
 
                 var hash = new Hash
                 {
-                    {"printers", printerHashes}
+                    ["printers"] = printerHashes
                 };
 
                 var rendered = template.Render(new RenderParameters { LocalVariables = hash, Filters = new[] {typeof(PrinterHealthFilters)} });
