@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -156,9 +157,21 @@ namespace KMBizhubHealthModule
         protected virtual XDocument FetchXml(string endpoint)
         {
             using (var client = GetNewClient())
-            using (Stream stream = client.GetStreamAsync(GetUri(endpoint)).SyncWait())
             {
-                return XDocument.Load(stream);
+                Stream stream;
+                try
+                {
+                    stream = client.GetStreamAsync(GetUri(endpoint)).SyncWait();
+                }
+                catch (AggregateException ae) when (ae.InnerExceptions.Count > 0 && ae.InnerExceptions[0] is TaskCanceledException)
+                {
+                    throw new TimeoutException("the fetch operation timed out", ae.InnerExceptions[0]);
+                }
+
+                using (stream)
+                {
+                    return XDocument.Load(stream);
+                }
             }
         }
 

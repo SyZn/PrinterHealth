@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -177,11 +178,20 @@ namespace OceColorWave6x0HealthModule
         {
             using (var client = GetNewClient())
             {
-                string docString = client.GetStringAsync(GetUri(endpoint)).SyncWait();
+                string docString;
+                try
+                {
+                    docString = client.GetStringAsync(GetUri(endpoint)).SyncWait();
+                }
+                catch (AggregateException ae) when (ae.InnerExceptions.Count > 0 && ae.InnerExceptions[0] is TaskCanceledException)
+                {
+                    throw new TimeoutException("the fetch operation timed out", ae.InnerExceptions[0]);
+                }
+
                 return JsonConvert.DeserializeObject<T>(docString);
             }
         }
- 
+
         public void Update()
         {
             var statusObject = FetchJson<CW6JsonStatus.Status>(StatusEndpoint);
