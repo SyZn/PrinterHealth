@@ -2,13 +2,11 @@
 
   <PropertyGroup>
     <VersionPrefix>0.0.16</VersionPrefix>
-    <TargetFrameworks>netcoreapp1.0;net46</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
     <DebugType>portable</DebugType>
     <AssemblyName>PrinterHealthWebService</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>PrinterHealthWebService</PackageId>
-    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
-    <RuntimeFrameworkVersion Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,12 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="DasMulli.Win32.ServiceUtils" Version="1.0.1" />
-    <PackageReference Include="RavuAlHemio.CentralizedLog" Version="0.0.7" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="RavuAlHemio.CentralizedLog" Version="0.0.8" />
   </ItemGroup>
 
 </Project>

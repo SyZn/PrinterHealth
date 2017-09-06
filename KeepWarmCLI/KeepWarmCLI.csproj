@@ -1,17 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp1.0</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <DebugType>portable</DebugType>
     <AssemblyName>KeepWarmCLI</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>KeepWarmCLI</PackageId>
-    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
-    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PrinterHealth\PrinterHealth.csproj" />
+    <ProjectReference Include="..\OceColorWave6x0HealthModule\OceColorWave6x0HealthModule.csproj" />
   </ItemGroup>
 
 </Project>

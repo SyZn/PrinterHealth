@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-#if NETCORE
-using System.Runtime.Loader;
-#endif
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -129,11 +126,7 @@ namespace PrinterHealth
                     continue;
                 }
 
-#if NETCORE
-                Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(PrinterHealthUtils.ProgramDirectory, printer.Assembly));
-#else
-                Assembly assembly = Assembly.LoadFile(Path.Combine(PrinterHealthUtils.ProgramDirectory, printer.Assembly));
-#endif
+                Assembly assembly = Assembly.Load(new AssemblyName(printer.Assembly));
                 if (assembly == null)
                 {
                     Logger.LogError(
@@ -178,7 +171,7 @@ namespace PrinterHealth
 
         public void StartKeepingWarm()
         {
-            if (_keepWarmTimer != null)
+            if (_keepWarmTimer == null)
             {
                 _keepWarmTimer = new Timer(KeepWarmPerform, null, TimeSpan.Zero, _keepWarmSpan);
             }
