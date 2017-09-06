@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using PrinterHealth;
 using RavuAlHemio.CentralizedLog;
 
@@ -17,29 +18,40 @@ namespace KeepWarmCLI
             // start the health monitor
             var healthMonitor = new HealthMonitor(config);
             // (starts automatically)
+            healthMonitor.StartKeepingWarm();
 
-            Console.WriteLine("Press Enter to trigger a warmup and Escape to exit.");
-            for (;;)
+            if (!Console.IsInputRedirected)
             {
-                var key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Escape)
+                Console.WriteLine("Press Enter to trigger a warmup and Escape to exit.");
+                for (;;)
                 {
-                    break;
-                }
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    try
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Escape)
                     {
-                        healthMonitor.KeepWarmActuallyPerform();
+                        break;
                     }
-                    catch (Exception exc)
+                    if (key.Key == ConsoleKey.Enter)
                     {
-                        Console.WriteLine("Exception!");
-                        Console.WriteLine(exc);
+                        try
+                        {
+                            healthMonitor.KeepWarmActuallyPerform();
+                        }
+                        catch (Exception exc)
+                        {
+                            Console.WriteLine("Exception!");
+                            Console.WriteLine(exc);
+                        }
                     }
                 }
             }
-            
+            else
+            {
+                for (;;)
+                {
+                    Thread.Sleep(Timeout.InfiniteTimeSpan);
+                }
+            }
+
             healthMonitor.Dispose();
         }
     }
