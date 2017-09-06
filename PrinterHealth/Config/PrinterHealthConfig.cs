@@ -15,7 +15,22 @@ namespace PrinterHealth.Config
         /// <summary>
         /// The port on which to listen.
         /// </summary>
-        public int ListenPort { get; set; }
+        public int Port { get; set; }
+
+        /// <summary>
+        /// Whether to listen using HTTPS instead of HTTP. If <c>true</c>, neither
+        /// <see cref="CertificateStoreFileName" /> nor <see cref="CertificateStorePassword" /> may be <c>null</c>.
+        public bool Https { get; set; }
+
+        /// <summary>
+        /// The filename of the certificate store from which to obtain the server's certificate.
+        /// </summary>
+        public string CertificateStoreFileName { get; set; }
+
+        /// <summary>
+        /// The password to use when opening the certificate store from which to obtain the server's certificate.
+        /// </summary>
+        public string CertificateStorePassword { get; set; }
 
         /// <summary>
         /// The interval how often printer status is updated.
@@ -40,7 +55,7 @@ namespace PrinterHealth.Config
         public PrinterHealthConfig()
         {
             Printers = new List<Printer>();
-            ListenPort = 8084;
+            Port = 8084;
             UpdateIntervalMinutes = 5.0;
             OutdatedIntervalMinutes = 15.0;
             KeepWarmIntervalMinutes = 30.0;

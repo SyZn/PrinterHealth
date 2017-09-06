@@ -4,6 +4,8 @@ using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DotLiquid;
@@ -41,9 +43,45 @@ namespace PrinterHealthWeb
         {
             _config = config;
             _monitor = monitor;
+
+            X509Certificate2 cert = null;
+            if (_config.Https)
+            {
+                if (_config.CertificateStoreFileName == null)
+                {
+                    if (_config.CertificateStorePassword == null)
+                    {
+                        Logger.LogCritical(
+                            "Config error: Https is true but CertificateStoreFileName and CertificateStorePassword are null"
+                        );
+                    }
+                    else
+                    {
+                        Logger.LogCritical("Config error: Https is true but CertificateStoreFileName is null");
+                    }
+                    return;
+                }
+
+                if (_config.CertificateStorePassword == null)
+                {
+                    Logger.LogCritical("Config error: Https is true but CertificateStoreFileName is null");
+                    return;
+                }
+
+                cert = new X509Certificate2(
+                    Path.Combine(PrinterHealthUtils.ProgramDirectory, config.CertificateStoreFileName),
+                    config.CertificateStorePassword
+                );
+            }
+
             WebHost = new WebHostBuilder()
-                .UseKestrel()
-                .UseUrls($"http://+:{config.ListenPort}/")
+                .UseKestrel(kestrel =>
+                {
+                    kestrel.Listen(IPAddress.Any, _config.Port, listenConfig =>
+                    {
+                        listenConfig.UseHttps(cert);
+                    });
+                })
                 .Configure(app =>
                 {
                     app.Use(async (ctx, next) =>
