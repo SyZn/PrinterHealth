@@ -237,7 +237,7 @@ namespace PrinterHealthWeb
                         : "never";
                     var lastUpdateTimely = printer.Value.LastUpdated.HasValue &&
                         (DateTimeOffset.Now - printer.Value.LastUpdated.Value).TotalMinutes <= _config.OutdatedIntervalMinutes;
-                    
+
                     return new Hash
                     {
                         ["name"] = printer.Key,
@@ -257,7 +257,12 @@ namespace PrinterHealthWeb
                     ["printers"] = printerHashes
                 };
 
-                var rendered = template.Render(new RenderParameters { LocalVariables = hash, Filters = new[] {typeof(PrinterHealthFilters)} });
+                var renderParams = new RenderParameters(CultureInfo.InvariantCulture)
+                {
+                    LocalVariables = hash,
+                    Filters = new Type[] {typeof(PrinterHealthFilters)}
+                };
+                string rendered = template.Render(renderParams);
                 var renderedBytes = PrinterHealthUtils.Utf8NoBom.GetBytes(rendered);
 
                 SendOkResponse(ctx.Response, "text/html; charset=utf-8", renderedBytes);
