@@ -98,7 +98,7 @@ namespace PrinterHealthWeb
             resp.StatusCode = statusCode;
             resp.ContentType = "text/plain; charset=utf-8";
 
-            var bodyBytes = PrinterHealthUtils.Utf8NoBom.GetBytes(body);
+            byte[] bodyBytes = PrinterHealthUtils.Utf8NoBom.GetBytes(body);
             resp.ContentLength = bodyBytes.Length;
             resp.Body.Write(bodyBytes, 0, bodyBytes.Length);
         }
@@ -110,7 +110,7 @@ namespace PrinterHealthWeb
 
         protected static void Send405Response(HttpResponse resp, params string[] allowedMethods)
         {
-            var allowedMethodsString = string.Join(", ", allowedMethods);
+            string allowedMethodsString = string.Join(", ", allowedMethods);
             resp.Headers["Allow"] = allowedMethodsString;
             SendPlainTextResponse(resp, 405, "I can only be accessed using: " + allowedMethodsString);
         }
@@ -132,7 +132,7 @@ namespace PrinterHealthWeb
 
         protected virtual void HandleRequest(HttpContext ctx)
         {
-            var method = ctx.Request.Method;
+            string method = ctx.Request.Method;
             string path = ctx.Request.Path;
 
             if (path == "/")
@@ -144,13 +144,13 @@ namespace PrinterHealthWeb
                 }
 
                 // load the health template
-                var templateBody = File.ReadAllText(Path.Combine(PrinterHealthUtils.ProgramDirectory, "Templates", "health.html"), PrinterHealthUtils.Utf8NoBom);
-                var template = Template.Parse(templateBody);
+                string templateBody = File.ReadAllText(Path.Combine(PrinterHealthUtils.ProgramDirectory, "Templates", "health.html"), PrinterHealthUtils.Utf8NoBom);
+                Template template = Template.Parse(templateBody);
 
                 // fill it
-                var printerHashes = _monitor.Printers.Select(printer =>
+                Hash[] printerHashes = _monitor.Printers.Select(printer =>
                 {
-                    var media = printer.Value.Media.Select(medium =>
+                    Hash[] media = printer.Value.Media.Select(medium =>
                     {
                         string statusClass = medium.IsEmpty ? "empty" : "unknown";
                         var monitoredMedium = medium as IMonitoredMedium;
@@ -188,7 +188,7 @@ namespace PrinterHealthWeb
                         return mediumHash;
                     }).ToArray();
 
-                    var markers = printer.Value.Markers.Select(marker =>
+                    Hash[] markers = printer.Value.Markers.Select(marker =>
                     {
                         string statusClass = marker.IsEmpty ? "empty" : "unknown";
                         var monitoredMarker = marker as IMonitoredMarker;
@@ -226,16 +226,16 @@ namespace PrinterHealthWeb
                         return markerHash;
                     }).ToArray();
 
-                    var statusMessages = printer.Value.CurrentStatusMessages.Select(statusMessage => new Hash
+                    Hash[] statusMessages = printer.Value.CurrentStatusMessages.Select(statusMessage => new Hash
                     {
                         ["level_class"] = statusMessage.Level.ToString().ToLowerInvariant(),
                         ["description"] = statusMessage.Description
                     }).ToArray();
 
-                    var lastUpdatedString = printer.Value.LastUpdated.HasValue
+                    string lastUpdatedString = printer.Value.LastUpdated.HasValue
                         ? printer.Value.LastUpdated.Value.ToString("dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture)
                         : "never";
-                    var lastUpdateTimely = printer.Value.LastUpdated.HasValue &&
+                    bool lastUpdateTimely = printer.Value.LastUpdated.HasValue &&
                         (DateTimeOffset.Now - printer.Value.LastUpdated.Value).TotalMinutes <= _config.OutdatedIntervalMinutes;
 
                     return new Hash
@@ -263,14 +263,14 @@ namespace PrinterHealthWeb
                     Filters = new Type[] {typeof(PrinterHealthFilters)}
                 };
                 string rendered = template.Render(renderParams);
-                var renderedBytes = PrinterHealthUtils.Utf8NoBom.GetBytes(rendered);
+                byte[] renderedBytes = PrinterHealthUtils.Utf8NoBom.GetBytes(rendered);
 
                 SendOkResponse(ctx.Response, "text/html; charset=utf-8", renderedBytes);
                 return;
             }
             else if (path.StartsWith("/static/"))
             {
-                var staticPath = path.Substring(("/static/").Length);
+                string staticPath = path.Substring(("/static/").Length);
                 if (!AllowedStaticFilenameFormat.IsMatch(staticPath))
                 {
                     // 404 for security reasons
@@ -284,9 +284,9 @@ namespace PrinterHealthWeb
                     Send404Response(ctx.Response);
                     return;
                 }
-                var bytes = File.ReadAllBytes(fileInfo.FullName);
-                var extension = staticPath.Split('.')[1].ToLowerInvariant();
-                var mimeType = MimeTypeForExtension(extension);
+                byte[] bytes = File.ReadAllBytes(fileInfo.FullName);
+                string extension = staticPath.Split('.')[1].ToLowerInvariant();
+                string mimeType = MimeTypeForExtension(extension);
 
                 SendOkResponse(ctx.Response, mimeType, bytes);
                 return;
