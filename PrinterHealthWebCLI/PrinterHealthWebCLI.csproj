@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RavuAlHemio.CentralizedLog" Version="0.0.8" />
+    <PackageReference Include="RavuAlHemio.CentralizedLog" Version="0.0.10" />
   </ItemGroup>
 
 </Project>

@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="DasMulli.Win32.ServiceUtils" Version="1.0.1" />
-    <PackageReference Include="RavuAlHemio.CentralizedLog" Version="0.0.8" />
+    <PackageReference Include="RavuAlHemio.CentralizedLog" Version="0.0.10" />
   </ItemGroup>
 
 </Project>
