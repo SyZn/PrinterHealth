@@ -79,7 +79,7 @@ namespace PrinterHealthWeb
                 {
                     kestrel.Listen(IPAddress.Any, _config.Port, listenConfig =>
                     {
-                        listenConfig.UseHttps(cert);
+                        if (cert != null) { listenConfig.UseHttps(cert); }
                     });
                 })
                 .Configure(app =>
