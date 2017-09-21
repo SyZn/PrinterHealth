@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KMBizhubHealthModule\KMBizhubHealthModule.csproj" />
+    <ProjectReference Include="..\OceColorWave6x0HealthModule\OceColorWave6x0HealthModule.csproj" />
     <ProjectReference Include="..\PrinterHealthWeb\PrinterHealthWeb.csproj" />
   </ItemGroup>
 
