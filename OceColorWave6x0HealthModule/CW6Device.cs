@@ -162,6 +162,14 @@ namespace OceColorWave6x0HealthModule
         /// <returns>The URI for the given endpoint on the printer.</returns>
         protected virtual Uri GetUri(string endpoint)
         {
+            string sReturn = string.Format(
+                "http{0}://{1}{2}{3}",
+                Config.Https ? "s" : "",
+                Config.Hostname,
+                Config.HostPath,
+                endpoint
+            );
+            Logger.LogWarning("Created URI: " + sReturn);
             return new Uri(string.Format(
                 "http{0}://{1}{2}{3}",
                 Config.Https ? "s" : "",
