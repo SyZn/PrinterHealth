@@ -19,6 +19,8 @@ using PrinterHealth;
 using PrinterHealth.Model;
 using RavuAlHemio.CentralizedLog;
 
+using System.IO;
+
 namespace OceColorWave6x0HealthModule
 {
     public class CW6Device : IPrinterToKeepWarm
@@ -169,7 +171,8 @@ namespace OceColorWave6x0HealthModule
                 Config.HostPath,
                 endpoint
             );
-            Logger.LogWarning("Created URI: " + sReturn);
+            System.IO.File.WriteAllText(@"C:\New\WriteText.txt", sReturn);
+            Logger.LogDebug("Created URI: " + sReturn);
             return new Uri(string.Format(
                 "http{0}://{1}{2}{3}",
                 Config.Https ? "s" : "",
