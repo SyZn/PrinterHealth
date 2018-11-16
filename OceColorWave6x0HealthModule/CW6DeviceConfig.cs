@@ -13,6 +13,11 @@ namespace OceColorWave6x0HealthModule
         public string Hostname { get; set; }
 
         /// <summary>
+        /// Path to add to Hostname
+        /// </summary>
+        public string HostPath { get; set; }
+
+        /// <summary>
         /// How many seconds to wait for a response from the printer.
         /// </summary>
         public int TimeoutSeconds { get; set; }

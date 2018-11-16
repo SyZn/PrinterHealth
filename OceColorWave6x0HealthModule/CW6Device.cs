@@ -98,7 +98,7 @@ namespace OceColorWave6x0HealthModule
             get { lock (_lock) { return CWReadyForSubmission; } }
         }
 
-        public virtual string WebInterfaceUri => string.Format("http{0}://{1}/", Config.Https ? "s" : "", Config.Hostname);
+        public virtual string WebInterfaceUri => string.Format("http{0}://{1}{2}/", Config.Https ? "s" : "", Config.Hostname, Config.HostPath);
 
         protected static string LetterToColor(string letter)
         {
@@ -163,9 +163,10 @@ namespace OceColorWave6x0HealthModule
         protected virtual Uri GetUri(string endpoint)
         {
             return new Uri(string.Format(
-                "http{0}://{1}{2}",
+                "http{0}://{1}{2}{3}",
                 Config.Https ? "s" : "",
                 Config.Hostname,
+                Config.HostPath,
                 endpoint
             ));
         }
