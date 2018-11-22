@@ -46,6 +46,7 @@ namespace OceColorWave6x0HealthModule
         /// <summary>
         /// The endpoint at which to request the job list.
         /// </summary>
+        //                                  /v2/owt/list_content_json.jsp?url=%2Fv2%2FQueueManager%2Fqueue_list_data.jsp&id=queue
         public const string JobListEndpoint = "/owt/list_content_json.jsp?url=%2FQueueManager%2Fqueue_list_data.jsp&id=queue&bundle=queuemanager&itemCount=15";
 
         /// <summary>
@@ -171,7 +172,6 @@ namespace OceColorWave6x0HealthModule
                 Config.HostPath,
                 endpoint
             );
-            System.IO.File.WriteAllText(@"C:\New\WriteText.txt", sReturn);
             Logger.LogDebug("Created URI: " + sReturn);
             return new Uri(string.Format(
                 "http{0}://{1}{2}{3}",
@@ -231,7 +231,12 @@ namespace OceColorWave6x0HealthModule
 
             // jobs
             int newJobCount = 0;
-            var jobsJson = FetchJson<JObject>(JobListEndpoint);
+                string sJobListEndpoint = JobListEndpoint;
+                if(Config.HostPath != "")
+                {
+                    sJobListEndpoint = "/owt/list_content_json.jsp?url=%2Fv2%2FQueueManager%2Fqueue_list_data.jsp&id=queue&bundle=queuemanager&itemCount=15";
+                }
+            var jobsJson = FetchJson<JObject>(sJobListEndpoint);
             var jobsJsonBody = jobsJson["body"] as JObject;
             if (jobsJsonBody != null)
             {
