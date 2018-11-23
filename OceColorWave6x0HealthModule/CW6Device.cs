@@ -236,6 +236,7 @@ namespace OceColorWave6x0HealthModule
                 {
                     sJobListEndpoint = "/owt/list_content_json.jsp?url=%2Fv2%2FQueueManager%2Fqueue_list_data.jsp&id=queue&bundle=queuemanager&itemCount=15";
                 }
+            Logger.LogDebug("Since " + Config.Hostname + " is using HostPath [" + Config.HostPath + "] we'll be using URI [" + sJobListEndpoint + "]");
             var jobsJson = FetchJson<JObject>(sJobListEndpoint);
             var jobsJsonBody = jobsJson["body"] as JObject;
             if (jobsJsonBody != null)
