@@ -172,14 +172,8 @@ namespace OceColorWave6x0HealthModule
                 Config.HostPath,
                 endpoint
             );
-            Logger.LogDebug("Created URI: " + sReturn);
-            return new Uri(string.Format(
-                "http{0}://{1}{2}{3}",
-                Config.Https ? "s" : "",
-                Config.Hostname,
-                Config.HostPath,
-                endpoint
-            ));
+            Logger.LogDebug("-- Created URI: '" + sReturn + "'");
+            return new Uri(sReturn);
         }
 
         /// <summary>
@@ -232,9 +226,8 @@ namespace OceColorWave6x0HealthModule
             // jobs
             int newJobCount = 0;
                 string sJobListEndpoint = JobListEndpoint;
-                if(Config.Hostname == "ra-plotter1.archlab.tuwien.ac.at")
+                if(Config.Hostname == "ra-plotter1.archlab.tuwien.ac.at" || Config.Hostname == "ra-plotter3.archlab.tuwien.ac.at")
                 {
-                    Logger.LogDebug("Since " + Config.Hostname + " is using HostPath [" + Config.HostPath + "] we'll be using URI [" + sJobListEndpoint + "]");
                     sJobListEndpoint = "/owt/list_content_json.jsp?url=%2Fv2%2FQueueManager%2Fqueue_list_data.jsp&id=queue&bundle=queuemanager&itemCount=15";
                 }
             var jobsJson = FetchJson<JObject>(sJobListEndpoint);
