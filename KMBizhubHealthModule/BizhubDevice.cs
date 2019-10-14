@@ -427,6 +427,8 @@ namespace KMBizhubHealthModule
 
                     var codeName = string.Format("{0}//{1}", paperSizeName, mediaType);
 
+                    Logger.LogDebug(" --- Found MediaCodeName: " + codeName);
+
                     var mediumDescription = mediumName;
                     if (paperName != null)
                     {
