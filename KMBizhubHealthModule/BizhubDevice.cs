@@ -415,6 +415,8 @@ namespace KMBizhubHealthModule
                 {
                     string mediumName = mediumElement.Element("TrayID")?.Value ?? "?";
 
+                    Logger.LogDebug(" --- Found Media: " + mediumName);
+
                     string mediumState = mediumElement.Element("CurrentLevel")?.Element("LevelState")?.Value ?? "";
 
                     string paperName = mediumElement.Element("CurrentPaper")?.Element("Size")?.Element("Name")?.Value;
